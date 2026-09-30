@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedDonate — Give medicine a second life</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,680&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #EFF2EA;
+    --surface: #FBFCF9;
+    --surface-2: #E7ECE2;
+    --ink: #1B231E;
+    --ink-soft: #566259;
+    --line: #D3DBCC;
+    --green-900: #16382F;
+    --green-700: #1F5C4E;
+    --green-600: #2A7663;
+    --green-100: #DCEAE3;
+    --gold-500: #E3A23F;
+    --gold-600: #C8862A;
+    --gold-100: #FBEBD2;
+    --radius-card: 10px;
+    --radius-pill: 999px;
+    --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --font-body: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101B16; --surface: #16241D; --surface-2: #1D2F26;
+      --ink: #E9EEE8; --ink-soft: #9BAA9F; --line: #2A3B31;
+      --green-900: #0E251F; --green-700: #2A7663; --green-600: #4E9A82; --green-100: #1E3730;
+      --gold-500: #E3A23F; --gold-600: #F0B85C; --gold-100: #3A2E17;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101B16; --surface: #16241D; --surface-2: #1D2F26;
+    --ink: #E9EEE8; --ink-soft: #9BAA9F; --line: #2A3B31;
+    --green-900: #0E251F; --green-700: #2A7663; --green-600: #4E9A82; --green-100: #1E3730;
+    --gold-500: #E3A23F; --gold-600: #F0B85C; --gold-100: #3A2E17;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--font-body); font-size: 15.5px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h3 { font-family: var(--font-display); font-weight: 600; color: var(--ink); margin: 0 0 .4em; letter-spacing: -0.01em; }
+  p { margin: 0; color: var(--ink-soft); }
+  button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--green-600); outline-offset: 2px; }
+
+  #shell { max-width: 960px; margin: 0 auto; padding: 0 20px 64px; min-height: 100%; display: flex; flex-direction: column; }
+
+  header.top { display: flex; align-items: center; padding: 22px 0 10px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 680; font-size: 1.3rem; }
+  .brand .mark {
+    width: 30px; height: 30px; border-radius: var(--radius-pill);
+    background: linear-gradient(135deg, var(--green-700), var(--green-600));
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+
+  main { flex: 1; display: flex; align-items: center; }
+  .hero { padding: 20px 0 40px; width: 100%; }
+  .hero h1 { font-size: clamp(2.1rem, 5vw, 3rem); line-height: 1.06; margin-bottom: 0.5em; }
+  .hero p.lede { font-size: 1.05rem; max-width: 46ch; }
+
+  .choice-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 30px; }
+  @media (max-width: 560px) { .choice-row { grid-template-columns: 1fr; } }
+  .choice-card {
+    text-align: left; cursor: pointer; background: var(--surface); border: 1.5px solid var(--line);
+    border-radius: var(--radius-card); padding: 22px; transition: border-color .15s ease, transform .12s ease;
+  }
+  .choice-card:hover, .choice-card:focus-visible { border-color: var(--green-600); transform: translateY(-2px); }
+  .choice-card .icon { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 14px; }
+  .choice-card.donor .icon { background: var(--gold-100); }
+  .choice-card.ngo .icon { background: var(--green-100); }
+  .choice-card h3 { font-size: 1.12rem; margin-bottom: 4px; }
+  .choice-card p { font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<div id="shell">
+  <header class="top">
+    <div class="brand">
+      <span class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M9.5 4.5L4.5 9.5C2.7 11.3 2.7 14.2 4.5 16C6.3 17.8 9.2 17.8 11 16L16 11C17.8 9.2 17.8 6.3 16 4.5C14.2 2.7 11.3 2.7 9.5 4.5Z" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+      MedDonate
+    </div>
+  </header>
+  <main>
+    <section class="hero">
+      <div>
+        <h1>Unused medicine finds<br>somewhere to go.</h1>
+        <p class="lede">MedDonate connects people with unexpired, unused medicine to verified NGOs and clinics nearby — with photo proof, location matching, and a straightforward review.</p>
+      </div>
+      <div class="choice-row">
+        <div class="choice-card donor" tabindex="0" role="button" aria-label="Continue as someone who wants to donate">
+          <div class="icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 9h16v11H4V9z" stroke="#C8862A" stroke-width="1.7"/><path d="M12 9v11M4 9V6a2 2 0 012-2h1a3 3 0 013 3v2M12 9V7a3 3 0 013-3h1a2 2 0 012 2v3" stroke="#C8862A" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>I want to donate</h3>
+          <p>List medicine you no longer need, with a quick photo and location.</p>
+        </div>
+        <div class="choice-card ngo" tabindex="0" role="button" aria-label="Continue as an NGO or clinic">
+          <div class="icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 21V5a1 1 0 011-1h6a1 1 0 011 1v16M13 21v-9a1 1 0 011-1h4a1 1 0 011 1v9M9 8h.01M9 11h.01M9 14h.01" stroke="#1F5C4E" stroke-width="1.7" stroke-linecap="round"/><path d="M3 21h18" stroke="#1F5C4E" stroke-width="1.7" stroke-linecap="round"/></svg>
+          </div>
+          <h3>I&rsquo;m an NGO / clinic</h3>
+          <p>Get verified, then review and accept donations near you.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>
