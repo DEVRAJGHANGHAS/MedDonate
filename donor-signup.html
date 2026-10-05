@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedDonate — Donor Sign Up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,680&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Firebase (used for real SMS OTP delivery via Phone Authentication) -->
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-auth-compat.js"></script>
+<link rel="stylesheet" href="donor-signup.css">
+</head>
+<body>
+<div id="shell">
+  <header class="top">
+    <div class="brand">
+      <span class="mark"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M9.5 4.5L4.5 9.5C2.7 11.3 2.7 14.2 4.5 16C6.3 17.8 9.2 17.8 11 16L16 11C17.8 9.2 17.8 6.3 16 4.5C14.2 2.7 11.3 2.7 9.5 4.5Z" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+      MedDonate
+    </div>
+    <a href="index.html" class="back-link">&larr; Home</a>
+  </header>
+  <main id="app"></main>
+</div>
+<div id="toast"></div>
+<div id="recaptcha-container"></div>
+
+<script>
+(function(){
+
+  /* ============================================================
+     FIREBASE SETUP — required for real SMS OTP delivery.
+     1. Create a free project at https://console.firebase.google.com
+     2. Build > Authentication > Sign-in method > enable "Phone"
+     3. Project settings > General > "Your apps" > add a Web app
+        and copy the config object it gives you into FIREBASE_CONFIG below.
+     4. Authentication > Settings > Authorized domains: add the
+        domain you deploy this page to (e.g. your-user.github.io).
+     Until this is filled in, "Send OTP" will show a setup error
+     instead of sending a real SMS.
+     ============================================================ */
+  var FIREBASE_CONFIG = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  var COUNTRY_CODE = "+91"; // change if donors are outside India
+
+  var firebaseReady = false;
+  try {
+    if (window.firebase && FIREBASE_CONFIG.apiKey.indexOf('YOUR_') !== 0) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      firebaseReady = true;
+    }
+  } catch (e) { firebaseReady = false; }
+
+  var confirmationResult = null;
+  var recaptchaVerifier = null;
+
+  function getRecaptcha(){
+    if (!recaptchaVerifier) {
+      recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size: 'invisible' });
+    }
+    return recaptchaVerifier;
+  }
+
+  var state = {
+    step: 1, // 1 = verify, 2 = profile, 3 = done
+    phone: '', phoneOtpSent: false, phoneVerified: false, demoPhoneOtp: '123456',
+    email: '', emailSent: false, emailVerified: false, demoEmailOtp: '123456',
+    profile: { firstName:'', lastName:'', age:'', dob:'', city:'', region:'', gender:'', pincode:'' }
+  };
+
+  function toast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(function(){ t.classList.remove('show'); }, 2300);
+  }
+
+  function iconCheck(){ return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }
+  function iconGift(){ return '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 9h16v11H4V9z" stroke="#1F5C4E" stroke-width="1.7"/><path d="M12 9v11M4 9V6a2 2 0 012-2h1a3 3 0 013 3v2M12 9V7a3 3 0 013-3h1a2 2 0 012 2v3" stroke="#1F5C4E" stroke-width="1.7" stroke-linejoin="round"/></svg>'; }
+
+  function stepTrack(step, total){
+    var dots = '';
+    for (var i=1;i<=total;i++){
+      var cls = i === step ? 'active' : (i < step ? 'done' : '');
+      dots += '<span class="step-dot ' + cls + '"></span>';
+    }
+    return '<div class="step-track">' + dots + '</div>';
+  }
+
+  function pageHead(eyebrow, title){
+    return '<div class="page-head"><p class="eyebrow">' + eyebrow + '</p><h1>' + title + '</h1></div>';
+  }
+
+  function verifyStepView(){
+    var bothVerified = state.phoneVerified && state.emailVerified;
+    return '' +
+    '<div class="notice-strip">' + (firebaseReady
+        ? 'Mobile OTP is sent as a real SMS via Firebase. Email OTP below is simulated.'
+        : 'Demo mode active: You can test mobile and email verification using demo OTPs (default: <strong>123456</strong>).') +
+    '</div>' +
+    stepTrack(1,2) +
+    pageHead('Donor sign up &middot; Step 1 of 2', 'Verify your mobile &amp; email') +
+    '<div class="card stack">' +
+
+      '<div>' +
+        '<label for="phoneInput">Mobile number</label>' +
+        '<div class="verify-row">' +
+          '<div style="display:flex; align-items:center; gap:6px; padding:11px 12px; border:1px solid var(--line); border-radius:var(--radius-input); background:var(--surface-2); font-weight:600; color:var(--ink-soft);">' + COUNTRY_CODE + '</div>' +
+          '<div class="field">' +
+            '<input type="tel" id="phoneInput" inputmode="numeric" maxlength="10" placeholder="98xxxxxxxx" value="' + esc(state.phone) + '" ' + (state.phoneVerified ? 'disabled' : '') + '>' +
+          '</div>' +
+          (state.phoneVerified
+            ? '<span class="badge">' + iconCheck() + ' Verified</span>'
+            : '<button class="btn btn-ghost" id="sendPhoneOtpBtn" data-action="send-phone-otp">' + (state.phoneOtpSent ? 'Resend' : 'Send OTP') + '</button>'
+          ) +
+        '</div>' +
+        (!state.phoneVerified ? '<p class="hint">10-digit mobile number, no country code.</p>' : '') +
+        (!state.phoneVerified && state.phoneOtpSent ?
+          '<div class="field" style="margin-top:12px;">' +
+            '<label for="phoneOtp">Enter OTP' + (!firebaseReady ? ' <span style="font-weight:400; color:var(--green-700);">(Demo OTP: <strong>' + state.demoPhoneOtp + '</strong>)</span>' : '') + '</label>' +
+            '<div class="verify-row">' +
+              '<div class="field" style="margin-bottom:0;"><input type="text" id="phoneOtp" inputmode="numeric" maxlength="6" placeholder="Enter ' + (firebaseReady ? '6-digit code' : state.demoPhoneOtp) + '"></div>' +
+              '<button class="btn btn-primary" data-action="verify-phone-otp">Verify</button>' +
+            '</div>' +
+            (!firebaseReady ? '<p class="hint">Enter <strong>' + state.demoPhoneOtp + '</strong> or <strong>123456</strong> to verify.</p>' : '') +
+          '</div>'
+        : '') +
+      '</div>' +
+
+      '<hr style="border:none; border-top:1px solid var(--line); margin:0;">' +
+
+      '<div>' +
+        '<label for="emailInput">Email address</label>' +
+        '<div class="verify-row">' +
+          '<div class="field">' +
+            '<input type="email" id="emailInput" placeholder="you@example.com" value="' + esc(state.email) + '" ' + (state.emailVerified ? 'disabled' : '') + '>' +
+          '</div>' +
+          (state.emailVerified
+            ? '<span class="badge">' + iconCheck() + ' Verified</span>'
+            : '<button class="btn btn-ghost" data-action="send-email-otp">' + (state.emailSent ? 'Resend' : 'Send OTP') + '</button>'
+          ) +
+        '</div>' +
+        (!state.emailVerified && state.emailSent ?
+          '<div class="field" style="margin-top:12px;">' +
+            '<label for="emailOtp">Enter OTP <span style="font-weight:400; color:var(--green-700);">(Demo OTP: <strong>' + state.demoEmailOtp + '</strong>)</span></label>' +
+            '<div class="verify-row">' +
+              '<div class="field" style="margin-bottom:0;"><input type="text" id="emailOtp" inputmode="numeric" maxlength="6" placeholder="Enter ' + state.demoEmailOtp + '"></div>' +
+              '<button class="btn btn-primary" data-action="verify-email-otp">Verify</button>' +
+            '</div>' +
+            '<p class="hint">Enter <strong>' + state.demoEmailOtp + '</strong> or <strong>123456</strong> to verify.</p>' +
+          '</div>'
+        : '') +
+      '</div>' +
+
+      '<button class="btn btn-gold btn-block" data-action="goto-profile" ' + (bothVerified ? '' : 'disabled') + '>Continue</button>' +
+    '</div>';
+  }
+
+  function calculateAgeFromDob(dobString){
+    if (!dobString) return '';
+    var parts = dobString.split('-');
+    if (parts.length !== 3) return '';
+    var birthYear = parseInt(parts[0], 10);
+    var birthMonth = parseInt(parts[1], 10) - 1;
+    var birthDay = parseInt(parts[2], 10);
+    if (isNaN(birthYear) || isNaN(birthMonth) || isNaN(birthDay)) return '';
+
+    var today = new Date();
+    var age = today.getFullYear() - birthYear;
+    var m = today.getMonth() - birthMonth;
+    if (m < 0 || (m === 0 && today.getDate() < birthDay)) {
+      age--;
+    }
+    return age >= 0 ? age : '';
+  }
+
+  function getTodayDateString(){
+    var d = new Date();
+    var mm = (d.getMonth() + 1);
+    var dd = d.getDate();
+    return d.getFullYear() + '-' + (mm < 10 ? '0' + mm : mm) + '-' + (dd < 10 ? '0' + dd : dd);
+  }
+
+  function profileStepView(){
+    var p = state.profile;
+    var maxDob = getTodayDateString();
+    return '' +
+    stepTrack(2,2) +
+    pageHead('Donor sign up &middot; Step 2 of 2', 'Tell us a little about you') +
+    '<form class="card" data-form="profile">' +
+      '<div class="two-col">' +
+        '<div class="field"><label for="fName">First name</label><input type="text" id="fName" required value="' + esc(p.firstName) + '"></div>' +
+        '<div class="field"><label for="lName">Last name</label><input type="text" id="lName" required value="' + esc(p.lastName) + '"></div>' +
+      '</div>' +
+      '<div class="two-col">' +
+        '<div class="field">' +
+          '<label for="dob">Date of birth</label>' +
+          '<input type="date" id="dob" required max="' + maxDob + '" value="' + esc(p.dob) + '">' +
+        '</div>' +
+        '<div class="field">' +
+          '<label for="age">Age <span style="font-weight:400; color:var(--ink-soft);">(auto-calculated)</span></label>' +
+          '<input type="number" id="age" min="1" max="120" required readonly value="' + esc(p.age) + '" placeholder="Auto-calculated from DOB" style="background:var(--surface-2); cursor:not-allowed;">' +
+        '</div>' +
+      '</div>' +
+      '<div class="two-col">' +
+        '<div class="field"><label for="city">City</label><input type="text" id="city" required value="' + esc(p.city) + '"></div>' +
+        '<div class="field"><label for="region">State / region</label><input type="text" id="region" required value="' + esc(p.region) + '"></div>' +
+      '</div>' +
+      '<div class="two-col">' +
+        '<div class="field"><label for="pincode">Pincode <span style="font-weight:400;">(optional)</span></label><input type="text" id="pincode" value="' + esc(p.pincode) + '"></div>' +
+        '<div class="field"><label for="gender">Gender <span style="font-weight:400;">(optional)</span></label>' +
+          '<select id="gender">' +
+            '<option value="">Prefer not to say</option>' +
+            '<option' + (p.gender==='Female'?' selected':'') + '>Female</option>' +
+            '<option' + (p.gender==='Male'?' selected':'') + '>Male</option>' +
+            '<option' + (p.gender==='Other'?' selected':'') + '>Other</option>' +
+          '</select>' +
+        '</div>' +
+      '</div>' +
+      '<p class="hint">City and state/region help us match your donation to NGOs and clinics near you.</p>' +
+      '<button class="btn btn-primary btn-block" type="submit" style="margin-top:6px;">Create account</button>' +
+    '</form>';
+  }
+
+  function doneStepView(){
+    var p = state.profile;
+    return '' +
+    '<div class="card success-card">' +
+      '<div class="icon-circle">' + iconGift() + '</div>' +
+      '<h1 style="font-size:1.5rem;">You\u2019re all set, ' + esc(p.firstName || 'friend') + '</h1>' +
+      '<p>Your donor account has been created. Proceed to your donor dashboard to list your first medicine and track its status.</p>' +
+      '<div style="display:flex; justify-content:center; gap:10px; margin-top:16px; flex-wrap:wrap;">' +
+        '<a href="donor-dashboard.html" class="btn btn-primary">Go to Donor Dashboard &rarr;</a>' +
+        '<a href="index.html" class="btn btn-ghost">Back to home</a>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function render(){
+    var app = document.getElementById('app');
+    if (state.step === 1) app.innerHTML = verifyStepView();
+    else if (state.step === 2) app.innerHTML = profileStepView();
+    else app.innerHTML = doneStepView();
+  }
+
+  function handleDobUpdate(dobInput){
+    var dobVal = dobInput.value;
+    var ageInput = document.getElementById('age');
+    if (!ageInput) return;
+    if (!dobVal) {
+      ageInput.value = '';
+      state.profile.dob = '';
+      state.profile.age = '';
+      return;
+    }
+    var calculated = calculateAgeFromDob(dobVal);
+    if (calculated === '' || calculated < 0) {
+      ageInput.value = '';
+      state.profile.dob = dobVal;
+      state.profile.age = '';
+    } else {
+      ageInput.value = calculated;
+      state.profile.dob = dobVal;
+      state.profile.age = calculated;
+    }
+  }
+
+  document.getElementById('shell').addEventListener('input', function(e){
+    if (e.target.id === 'phoneInput') {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    }
+    if (e.target.id === 'phoneOtp' || e.target.id === 'emailOtp') {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    }
+    if (e.target.id === 'dob') {
+      handleDobUpdate(e.target);
+    }
+  });
+
+  document.getElementById('shell').addEventListener('change', function(e){
+    if (e.target.id === 'dob') {
+      handleDobUpdate(e.target);
+    }
+  });
+
+  document.getElementById('shell').addEventListener('click', function(e){
+    var t = e.target.closest('[data-action]');
+    if (!t) return;
+    var action = t.getAttribute('data-action');
+
+    if (action === 'send-phone-otp') {
+      var v = document.getElementById('phoneInput').value.trim();
+      if (!v) { toast('Enter a mobile number first'); return; }
+      if (!/^\d{10}$/.test(v)) { toast('Enter a valid 10-digit mobile number'); return; }
+
+      // If Firebase is configured with real credentials, send real SMS
+      if (firebaseReady) {
+        var btn = document.getElementById('sendPhoneOtpBtn');
+        if (btn) { btn.disabled = true; btn.textContent = 'Sending\u2026'; }
+
+        firebase.auth().signInWithPhoneNumber(COUNTRY_CODE + v, getRecaptcha())
+          .then(function(result){
+            confirmationResult = result;
+            state.phone = v;
+            state.phoneOtpSent = true;
+            render();
+            toast('OTP sent to ' + COUNTRY_CODE + v);
+          })
+          .catch(function(err){
+            if (btn) { btn.disabled = false; btn.textContent = 'Send OTP'; }
+            toast('Could not send OTP: ' + (err && err.message ? err.message : 'please try again'));
+            if (recaptchaVerifier) {
+              recaptchaVerifier.render().then(function(id){
+                if (window.grecaptcha) grecaptcha.reset(id);
+              });
+            }
+          });
+        return;
+      }
+
+      // Demo OTP flow
+      var demoCode = Math.floor(100000 + Math.random() * 900000).toString();
+      state.demoPhoneOtp = demoCode;
+      state.phone = v;
+      state.phoneOtpSent = true;
+      render();
+      toast('Demo OTP sent: ' + demoCode);
+      return;
+    }
+
+    if (action === 'verify-phone-otp') {
+      var code = document.getElementById('phoneOtp').value.trim();
+      if (!code) { toast('Enter the OTP'); return; }
+
+      if (firebaseReady && confirmationResult) {
+        confirmationResult.confirm(code)
+          .then(function(){
+            state.phoneVerified = true;
+            render();
+            toast('Mobile number verified');
+          })
+          .catch(function(){
+            toast('Incorrect OTP \u2014 please try again');
+          });
+        return;
+      }
+
+      // Demo verification (accepts generated demo code or 123456)
+      if (code === state.demoPhoneOtp || code === '123456') {
+        state.phoneVerified = true;
+        render();
+        toast('Mobile number verified successfully!');
+      } else {
+        toast('Incorrect OTP — enter ' + state.demoPhoneOtp + ' or 123456');
+      }
+      return;
+    }
+
+    if (action === 'send-email-otp') {
+      var v = document.getElementById('emailInput').value.trim();
+      if (!v || v.indexOf('@') === -1) { toast('Enter a valid email first'); return; }
+      var demoEmailCode = Math.floor(100000 + Math.random() * 900000).toString();
+      state.demoEmailOtp = demoEmailCode;
+      state.email = v;
+      state.emailSent = true;
+      render();
+      toast('Demo OTP sent: ' + demoEmailCode);
+      return;
+    }
+
+    if (action === 'verify-email-otp') {
+      var code = document.getElementById('emailOtp').value.trim();
+      if (!code) { toast('Enter the OTP'); return; }
+      if (code === state.demoEmailOtp || code === '123456') {
+        state.emailVerified = true;
+        render();
+        toast('Email verified successfully!');
+      } else {
+        toast('Incorrect OTP — enter ' + state.demoEmailOtp + ' or 123456');
+      }
+      return;
+    }
+
+    if (action === 'goto-profile') {
+      state.step = 2;
+      render();
+      window.scrollTo({top:0, behavior:'smooth'});
+      return;
+    }
+  });
+
+  document.getElementById('shell').addEventListener('submit', function(e){
+    var form = e.target.closest('[data-form="profile"]');
+    if (!form) return;
+    e.preventDefault();
+
+    var dobVal = document.getElementById('dob').value;
+    var calcAge = calculateAgeFromDob(dobVal);
+    if (!dobVal || calcAge === '' || calcAge < 0) {
+      toast('Please select a valid date of birth');
+      return;
+    }
+
+    state.profile.firstName = document.getElementById('fName').value.trim();
+    state.profile.lastName = document.getElementById('lName').value.trim();
+    state.profile.dob = dobVal;
+    state.profile.age = calcAge;
+    state.profile.city = document.getElementById('city').value.trim();
+    state.profile.region = document.getElementById('region').value.trim();
+    state.profile.pincode = document.getElementById('pincode').value.trim();
+    state.profile.gender = document.getElementById('gender').value;
+
+    try {
+      localStorage.setItem('meddonate_user', JSON.stringify({
+        firstName: state.profile.firstName,
+        lastName: state.profile.lastName,
+        dob: state.profile.dob,
+        age: state.profile.age,
+        city: state.profile.city,
+        region: state.profile.region,
+        pincode: state.profile.pincode,
+        gender: state.profile.gender,
+        phone: state.phone,
+        email: state.email
+      }));
+    } catch(err){}
+
+    state.step = 3;
+    render();
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

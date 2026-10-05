@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MedDonate — Donor Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,680&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="donor-dashboard.css">
+</head>
+<body>
+
+<div id="shell">
+  <!-- Top Navigation -->
+  <header class="top">
+    <a href="index.html" class="brand" title="Back to MedDonate Homepage">
+      <span class="mark">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M7 17L17 7M9.5 4.5L4.5 9.5C2.7 11.3 2.7 14.2 4.5 16C6.3 17.8 9.2 17.8 11 16L16 11C17.8 9.2 17.8 6.3 16 4.5C14.2 2.7 11.3 2.7 9.5 4.5Z" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </span>
+      MedDonate
+    </a>
+
+    <div class="nav-right">
+      <div class="user-chip" id="userProfileChip" title="Click to view/edit your profile or log out">
+        <span class="user-avatar" id="userAvatar">D</span>
+        <span id="userNameDisplay">Donor</span>
+        <span style="font-size:0.75rem; color:var(--ink-soft); margin-left:3px;">✏️ Edit</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="openChatBtn" title="Open messages with NGOs">
+        💬 Messages <span class="badge badge-accepted" id="chatBadge" style="margin-left:4px; padding:2px 6px;">1</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Welcome Banner -->
+  <section class="hero-banner">
+    <div>
+      <h1 id="welcomeHeading">Welcome, Donor!</h1>
+      <p>List unused, unexpired medicines to connect with nearby verified NGOs and clinics. Track your donations from listing to pickup.</p>
+    </div>
+    <div class="hero-actions">
+      <button class="btn btn-primary" id="openListModalBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        List Medicine to Donate
+      </button>
+    </div>
+  </section>
+
+  <!-- Statistics Counters -->
+  <section class="stats-grid">
+    <div class="stat-card">
+      <div class="val" id="statTotal">0</div>
+      <div class="label">Total Listed</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" id="statPending" style="color:var(--gold-600);">0</div>
+      <div class="label">Pending Review</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" id="statAccepted" style="color:var(--green-700);">0</div>
+      <div class="label">Accepted by NGO</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" id="statCompleted" style="color:var(--blue-600);">0</div>
+      <div class="label">Handover Complete</div>
+    </div>
+  </section>
+
+  <!-- Section Header & Filters -->
+  <div class="section-header">
+    <h2>My Listed Medicines &amp; Status</h2>
+    <div class="filter-pills">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="pending">Pending Review</button>
+      <button class="filter-btn" data-filter="accepted">Accepted (Ready for Pickup)</button>
+      <button class="filter-btn" data-filter="completed">Completed</button>
+    </div>
+  </div>
+
+  <!-- Donations Grid -->
+  <div class="donations-grid" id="donationsContainer">
+    <!-- Rendered dynamically by JavaScript -->
+  </div>
+</div>
+
+<!-- ================= MODAL: EDIT PROFILE ================= -->
+<div class="modal-overlay" id="profileEditModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div>
+        <h3>Edit Donor Profile</h3>
+        <p style="margin:0; font-size:0.8rem; color:var(--ink-soft);">Update your personal details, age/DOB, or pickup location.</p>
+      </div>
+      <button class="close-btn" id="closeProfileModalBtn">&times;</button>
+    </div>
+
+    <form id="profileEditForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="editFirstName">First Name *</label>
+          <input type="text" id="editFirstName" required placeholder="First name">
+        </div>
+        <div class="form-group">
+          <label for="editLastName">Last Name</label>
+          <input type="text" id="editLastName" placeholder="Last name">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="editDob">Date of Birth</label>
+          <input type="date" id="editDob">
+        </div>
+        <div class="form-group">
+          <label for="editAge">Age <span style="font-weight:400; color:var(--ink-soft);">(auto-calculated)</span></label>
+          <input type="number" id="editAge" min="1" max="120" readonly placeholder="Auto from DOB" style="background:var(--surface-2); cursor:not-allowed;">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="editCity">City *</label>
+          <input type="text" id="editCity" required placeholder="e.g. New Delhi">
+        </div>
+        <div class="form-group">
+          <label for="editRegion">State / Region</label>
+          <input type="text" id="editRegion" placeholder="e.g. Delhi NCR">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="editPincode">Pincode</label>
+          <input type="text" id="editPincode" placeholder="e.g. 110001">
+        </div>
+        <div class="form-group">
+          <label for="editGender">Gender</label>
+          <select id="editGender">
+            <option value="">Prefer not to say</option>
+            <option value="Female">Female</option>
+            <option value="Male">Male</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="editPhone">Mobile Number</label>
+        <input type="tel" id="editPhone" maxlength="10" placeholder="10-digit mobile number">
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:22px; padding-top:16px; border-top:1px solid var(--line); flex-wrap:wrap; gap:10px;">
+        <button type="button" class="btn btn-danger btn-sm" id="logoutBtn" title="Log out from donor account">
+          🚪 Log Out
+        </button>
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="btn btn-ghost" id="cancelProfileBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MODAL: LIST MEDICINE ================= -->
+<div class="modal-overlay" id="listMedicineModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <h3>List Medicine to Donate</h3>
+      <button class="close-btn" id="closeListModalBtn">&times;</button>
+    </div>
+
+    <form id="listMedicineForm">
+      <div class="form-group">
+        <label for="medName">Medicine Name &amp; Strength *</label>
+        <input type="text" id="medName" required placeholder="e.g. Augmentin 625mg or Paracetamol 500mg">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="medCategory">Category *</label>
+          <select id="medCategory" required>
+            <option value="Tablets / Capsules">Tablets / Capsules</option>
+            <option value="Syrup / Liquid">Syrup / Liquid</option>
+            <option value="Ointment / Cream">Ointment / Cream</option>
+            <option value="Injection">Injection</option>
+            <option value="Inhaler / Resp">Inhaler / Resp</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="medQuantity">Quantity / Units *</label>
+          <input type="text" id="medQuantity" required placeholder="e.g. 2 strips (20 tabs) or 1 bottle">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="medExpiry">Expiry Date *</label>
+          <input type="date" id="medExpiry" required>
+          <div class="expiry-alert" id="expiryAlert">
+            ⚠️ Expired medicines cannot be donated according to safety regulations. Please check safe disposal guidelines.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="medBatch">Batch No. <span style="font-weight:400;">(optional)</span></label>
+          <input type="text" id="medBatch" placeholder="e.g. BT-92841">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="medCondition">Packaging Condition *</label>
+        <select id="medCondition" required>
+          <option value="Sealed blister / foil pack">Sealed blister / foil pack</option>
+          <option value="Unopened bottle with intact seal">Unopened bottle with intact seal</option>
+          <option value="Box with tamper-proof seal">Box with tamper-proof seal</option>
+        </select>
+      </div>
+
+      <!-- Medicine Photos (Front and Back) -->
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; flex-wrap:wrap; gap:6px;">
+          <label style="margin-bottom:0; font-weight:600;">Medicine Photos (Front &amp; Back Sides) *</label>
+          <button type="button" id="loadSamplePhotosBtn" style="background:transparent; border:none; color:var(--green-700); font-size:0.75rem; cursor:pointer; font-weight:600; text-decoration:underline; padding:0;">
+            ⚡ Load sample front &amp; back photos
+          </button>
+        </div>
+        <p style="font-size:0.75rem; color:var(--ink-soft); margin-bottom:8px;">
+          Take or upload clear photos showing the medicine name &amp; strength (front side) and the expiry date &amp; batch details (back side).
+        </p>
+
+        <div class="photo-upload-row">
+          <!-- Front Photo -->
+          <div class="photo-slot">
+            <div class="photo-slot-header">
+              <span class="slot-title">📷 Front Side</span>
+              <span class="slot-hint">Name &amp; strength</span>
+            </div>
+            <div class="photo-dropzone" id="frontDropzone">
+              <input type="file" id="frontPhotoInput" accept="image/*" capture="environment" style="display:none;">
+              <div class="dropzone-placeholder" id="frontPlaceholder">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="#1F5C4E" stroke-width="1.8"/><circle cx="12" cy="13" r="4" stroke="#1F5C4E" stroke-width="1.8"/></svg>
+                <div style="font-size:0.78rem; font-weight:600; color:var(--ink); margin-top:4px;">Take Photo / Upload</div>
+                <div style="font-size:0.7rem; color:var(--ink-soft);">Camera or file</div>
+              </div>
+              <div class="photo-preview-wrap" id="frontPreviewWrap" style="display:none;">
+                <img id="frontPreviewImg" class="photo-preview-img" alt="Front side preview">
+                <button type="button" class="remove-photo-btn" id="removeFrontPhotoBtn" title="Remove image">&times;</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Back Photo -->
+          <div class="photo-slot">
+            <div class="photo-slot-header">
+              <span class="slot-title">📷 Back Side</span>
+              <span class="slot-hint">Expiry &amp; batch no.</span>
+            </div>
+            <div class="photo-dropzone" id="backDropzone">
+              <input type="file" id="backPhotoInput" accept="image/*" capture="environment" style="display:none;">
+              <div class="dropzone-placeholder" id="backPlaceholder">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="#1F5C4E" stroke-width="1.8"/><circle cx="12" cy="13" r="4" stroke="#1F5C4E" stroke-width="1.8"/></svg>
+                <div style="font-size:0.78rem; font-weight:600; color:var(--ink); margin-top:4px;">Take Photo / Upload</div>
+                <div style="font-size:0.7rem; color:var(--ink-soft);">Camera or file</div>
+              </div>
+              <div class="photo-preview-wrap" id="backPreviewWrap" style="display:none;">
+                <img id="backPreviewImg" class="photo-preview-img" alt="Back side preview">
+                <button type="button" class="remove-photo-btn" id="removeBackPhotoBtn" title="Remove image">&times;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="medLocation">Pickup City / Area *</label>
+        <input type="text" id="medLocation" required placeholder="e.g. Connaught Place, New Delhi">
+      </div>
+
+      <div class="form-group">
+        <label for="medNotes">Storage / Special Notes <span style="font-weight:400;">(optional)</span></label>
+        <textarea id="medNotes" rows="2" placeholder="e.g. Kept in cool dry storage, original carton box available"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+        <button type="button" class="btn btn-ghost" id="cancelListBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="submitMedBtn">Submit Donation Listing</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= CHAT DRAWER / WINDOW ================= -->
+<div class="chat-drawer" id="chatDrawer">
+  <div class="chat-head">
+    <div class="chat-ngo-info">
+      <div class="chat-avatar" id="chatAvatar">S</div>
+      <div>
+        <h4 id="chatNgoName">Seva Care Clinic <span class="badge badge-accepted" style="font-size:0.65rem; padding:2px 6px;">Verified</span></h4>
+        <div class="chat-subhead" id="chatNgoSub">Pickup Coordinator &bull; 2.4 km away</div>
+      </div>
+    </div>
+    <button class="close-btn" id="closeChatBtn">&times;</button>
+  </div>
+
+  <div class="chat-med-context" id="chatMedContext">
+    <span>💊 Discussing: <strong id="chatMedName">Amoxicillin 500mg</strong></span>
+    <span class="badge badge-accepted" id="chatStatusPill">Accepted</span>
+  </div>
+
+  <div class="chat-messages" id="chatMessages">
+    <!-- Messages injected dynamically -->
+  </div>
+
+  <div class="quick-replies" id="quickReplies">
+    <span class="quick-pill" data-msg="Today evening between 5-7 PM works for pickup">Today 5-7 PM</span>
+    <span class="quick-pill" data-msg="Tomorrow morning after 10 AM is good">Tomorrow morning</span>
+    <span class="quick-pill" data-msg="Please share the volunteer's name and ID">Ask Volunteer ID</span>
+    <span class="quick-pill" data-msg="I can drop it off directly at your clinic">I can drop off</span>
+  </div>
+
+  <form class="chat-input-area" id="chatForm">
+    <input type="text" id="chatInput" placeholder="Type a message to coordinate pickup..." autocomplete="off">
+    <button type="submit" class="chat-send-btn" title="Send message">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </form>
+</div>
+
+<!-- Toast element -->
+<div id="toast"></div>
+
+<script>
+(function(){
+  // Key for local storage
+  var STORAGE_KEY_DONATIONS = 'meddonate_donations';
+  var STORAGE_KEY_USER = 'meddonate_user';
+  var STORAGE_KEY_CHAT = 'meddonate_chat_messages';
+
+  // Load user profile
+  var user = null;
+  try {
+    user = JSON.parse(localStorage.getItem(STORAGE_KEY_USER));
+  } catch(e){}
+
+  if (!user) {
+    user = {
+      firstName: 'Devraj',
+      lastName: '',
+      city: 'Delhi',
+      region: 'NCR',
+      phone: '9876543210'
+    };
+  }
+
+  // Calculate age from DOB
+  function calculateAgeFromDob(dobString){
+    if (!dobString) return '';
+    var parts = dobString.split('-');
+    if (parts.length !== 3) return '';
+    var birthYear = parseInt(parts[0], 10);
+    var birthMonth = parseInt(parts[1], 10) - 1;
+    var birthDay = parseInt(parts[2], 10);
+    if (isNaN(birthYear) || isNaN(birthMonth) || isNaN(birthDay)) return '';
+
+    var today = new Date();
+    var age = today.getFullYear() - birthYear;
+    var m = today.getMonth() - birthMonth;
+    if (m < 0 || (m === 0 && today.getDate() < birthDay)) {
+      age--;
+    }
+    return age >= 0 ? age : '';
+  }
+
+  // Update UI with user info
+  function syncUserUI(){
+    var fullName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Donor';
+    document.getElementById('userNameDisplay').textContent = fullName + (user.city ? ' • ' + user.city : '');
+    document.getElementById('userAvatar').textContent = (user.firstName ? user.firstName.charAt(0).toUpperCase() : 'D');
+    document.getElementById('welcomeHeading').textContent = 'Welcome, ' + (user.firstName || 'Donor') + '!';
+    if (user.city) {
+      document.getElementById('medLocation').value = (user.region ? user.city + ', ' + user.region : user.city);
+    }
+  }
+  syncUserUI();
+
+  // Demo packaging photos (SVG base64 Data URLs)
+  var SAMPLE_FRONT_PHOTO = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250" viewBox="0 0 400 250"><rect width="400" height="250" fill="%23FFFFFF" stroke="%23D3DBCC" stroke-width="4" rx="8"/><rect x="20" y="20" width="360" height="50" fill="%231F5C4E" rx="4"/><text x="35" y="52" fill="%23FFFFFF" font-family="sans-serif" font-size="20" font-weight="bold">AUGMENTIN 625mg</text><text x="35" y="100" fill="%231B231E" font-family="sans-serif" font-size="14" font-weight="bold">Amoxicillin &amp; Potassium Clavulanate</text><text x="35" y="130" fill="%23566259" font-family="sans-serif" font-size="13">10 Film Coated Tablets &bull; IP</text><rect x="35" y="165" width="130" height="30" fill="%23DCEAE3" rx="15"/><text x="50" y="185" fill="%2316382F" font-family="sans-serif" font-size="12" font-weight="bold">FRONT SIDE PHOTO</text><circle cx="340" cy="180" r="22" fill="%23E3A23F"/><text x="331" y="186" fill="%23FFFFFF" font-family="sans-serif" font-size="13" font-weight="bold">Rx</text></svg>';
+
+  var SAMPLE_BACK_PHOTO = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250" viewBox="0 0 400 250"><rect width="400" height="250" fill="%23E7ECE2" stroke="%23D3DBCC" stroke-width="4" rx="8"/><rect x="20" y="20" width="360" height="40" fill="%232A7663" rx="4"/><text x="35" y="46" fill="%23FFFFFF" font-family="sans-serif" font-size="16" font-weight="bold">BATCH &amp; EXPIRY DETAILS</text><text x="35" y="95" fill="%231B231E" font-family="sans-serif" font-size="14">B.No: <tspan font-weight="bold">BT-84920</tspan></text><text x="35" y="125" fill="%23B3452F" font-family="sans-serif" font-size="15" font-weight="bold">EXP: 08/2027 (UNEXPIRED)</text><text x="35" y="155" fill="%23566259" font-family="sans-serif" font-size="13">Mfg Date: 09/2025 &bull; M.R.P. ₹204.50</text><rect x="35" y="185" width="130" height="30" fill="%2316382F" rx="15"/><text x="50" y="205" fill="%23FFFFFF" font-family="sans-serif" font-size="12" font-weight="bold">BACK SIDE PHOTO</text><text x="240" y="205" fill="%23566259" font-family="sans-serif" font-size="11">GSK Pharmaceuticals</text></svg>';
+
+  // Default seed listings if none exist
+  var defaultDonations = [
+    {
+      id: 'med-101',
+      name: 'Amoxicillin 625mg',
+      category: 'Tablets / Capsules',
+      quantity: '2 strips (20 capsules)',
+      batch: 'AMX-2049',
+      expiry: '2027-08-15',
+      condition: 'Sealed blister / foil pack',
+      location: user.city || 'Central Delhi',
+      status: 'accepted',
+      statusText: 'Accepted by NGO',
+      frontPhoto: SAMPLE_FRONT_PHOTO,
+      backPhoto: SAMPLE_BACK_PHOTO,
+      acceptedBy: {
+        name: 'Seva Care Community Clinic',
+        doctor: 'Dr. Verma',
+        distance: '2.4 km away'
+      },
+      listedDate: 'Yesterday'
+    },
+    {
+      id: 'med-102',
+      name: 'Paracetamol 650mg',
+      category: 'Tablets / Capsules',
+      quantity: '1 full box (3 strips)',
+      batch: 'PCM-8120',
+      expiry: '2027-11-30',
+      condition: 'Box with tamper-proof seal',
+      location: user.city || 'Central Delhi',
+      status: 'pending',
+      statusText: 'Pending NGO Review',
+      frontPhoto: SAMPLE_FRONT_PHOTO,
+      backPhoto: SAMPLE_BACK_PHOTO,
+      listedDate: 'Today'
+    }
+  ];
+
+  // Retrieve or initialize donations
+  function getDonations(){
+    var raw = localStorage.getItem(STORAGE_KEY_DONATIONS);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEY_DONATIONS, JSON.stringify(defaultDonations));
+      return defaultDonations;
+    }
+    try {
+      return JSON.parse(raw);
+    } catch(e) {
+      return defaultDonations;
+    }
+  }
+
+  function saveDonations(list){
+    localStorage.setItem(STORAGE_KEY_DONATIONS, JSON.stringify(list));
+    renderDonations();
+  }
+
+  // Toast notification
+  function toast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+  }
+
+  // Current active filter
+  var currentFilter = 'all';
+
+  // Render donations list
+  function renderDonations(){
+    var list = getDonations();
+    var container = document.getElementById('donationsContainer');
+
+    // Update stats
+    var pendingCount = 0;
+    var acceptedCount = 0;
+    var completedCount = 0;
+
+    list.forEach(function(d){
+      if (d.status === 'pending') pendingCount++;
+      else if (d.status === 'accepted') acceptedCount++;
+      else if (d.status === 'completed') completedCount++;
+    });
+
+    document.getElementById('statTotal').textContent = list.length;
+    document.getElementById('statPending').textContent = pendingCount;
+    document.getElementById('statAccepted').textContent = acceptedCount;
+    document.getElementById('statCompleted').textContent = completedCount;
+    document.getElementById('chatBadge').textContent = acceptedCount;
+
+    // Filter list
+    var filtered = list.filter(function(d){
+      if (currentFilter === 'all') return true;
+      return d.status === currentFilter;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = '' +
+        '<div class="empty-state">' +
+          '<div class="icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 9h16v11H4V9z" stroke="#566259" stroke-width="1.8"/><path d="M12 9v11M4 9V6a2 2 0 012-2h1a3 3 0 013 3v2M12 9V7a3 3 0 013-3h1a2 2 0 012 2v3" stroke="#566259" stroke-width="1.8"/></svg></div>' +
+          '<h3>No medicines found in this tab</h3>' +
+          '<p>Click "List Medicine to Donate" above to add your first medicine listing.</p>' +
+        '</div>';
+      return;
+    }
+
+    var html = '';
+    filtered.forEach(function(d){
+      var isPending = d.status === 'pending';
+      var isAccepted = d.status === 'accepted';
+      var isCompleted = d.status === 'completed';
+
+      var badgeClass = isPending ? 'badge-pending' : (isAccepted ? 'badge-accepted' : 'badge-completed');
+      var badgeText = isPending ? '🟡 Pending NGO Review' : (isAccepted ? '🟢 Accepted by Clinic' : '🔵 Handover Complete');
+
+      // Stepper node states
+      var step1Class = 'done';
+      var step2Class = 'done';
+      var step3Class = isAccepted || isCompleted ? 'done' : (isPending ? 'active' : '');
+      var step4Class = isCompleted ? 'done' : (isAccepted ? 'active' : '');
+
+      html += '' +
+      '<div class="donation-card" data-id="' + d.id + '">' +
+        '<div class="card-top">' +
+          '<div style="display:flex; gap:12px; align-items:center;">' +
+            '<div class="med-icon">💊</div>' +
+            '<div>' +
+              '<h3>' + escapeHtml(d.name) + '</h3>' +
+              '<span style="font-size:0.78rem; color:var(--ink-soft);">' + escapeHtml(d.category) + ' &bull; ' + escapeHtml(d.quantity) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<span class="badge ' + badgeClass + '">' + badgeText + '</span>' +
+        '</div>' +
+
+        '<div class="med-meta">' +
+          '<div class="med-meta-item"><span>📅 Expiry:</span> <strong>' + escapeHtml(d.expiry) + '</strong></div>' +
+          (d.batch ? '<div class="med-meta-item"><span>🏷️ Batch:</span> ' + escapeHtml(d.batch) + '</div>' : '') +
+          '<div class="med-meta-item"><span>📍 Location:</span> ' + escapeHtml(d.location) + '</div>' +
+        '</div>' +
+
+        (d.frontPhoto || d.backPhoto ?
+          '<div class="card-photos-preview">' +
+            (d.frontPhoto ? '<div class="card-photo-thumb"><img src="' + d.frontPhoto + '" alt="Front photo"><span class="card-photo-label">📷 Front Side</span></div>' : '') +
+            (d.backPhoto ? '<div class="card-photo-thumb"><img src="' + d.backPhoto + '" alt="Back photo"><span class="card-photo-label">📷 Back Side (Expiry)</span></div>' : '') +
+          '</div>'
+        : '') +
+
+        '<!-- Progress Stepper -->' +
+        '<div class="card-stepper">' +
+          '<div class="step-node ' + step1Class + '"><div class="step-circle">✓</div><span class="step-label">Listed</span></div>' +
+          '<div class="step-node ' + step2Class + '"><div class="step-circle">✓</div><span class="step-label">Verified</span></div>' +
+          '<div class="step-node ' + step3Class + '"><div class="step-circle">' + (isAccepted || isCompleted ? '✓' : '3') + '</div><span class="step-label">NGO Accepted</span></div>' +
+          '<div class="step-node ' + step4Class + '"><div class="step-circle">' + (isCompleted ? '✓' : '4') + '</div><span class="step-label">Picked Up</span></div>' +
+        '</div>' +
+
+        (isAccepted && d.acceptedBy ?
+          '<div class="ngo-info-box">' +
+            '<div class="ngo-name">🏥 ' + escapeHtml(d.acceptedBy.name) + '</div>' +
+            '<div style="color:var(--ink-soft); margin-top:3px;">Coordinator: ' + escapeHtml(d.acceptedBy.doctor) + ' (' + escapeHtml(d.acceptedBy.distance) + ')</div>' +
+          '</div>'
+        : '') +
+
+        (isPending ?
+          '<div style="font-size:0.8rem; color:var(--ink-soft); margin-bottom:14px; background:var(--surface-2); padding:8px 12px; border-radius:var(--radius-input);">' +
+            '🔍 Matching with verified clinics and NGOs nearby (within 10 km)...' +
+          '</div>'
+        : '') +
+
+        '<div class="card-actions">' +
+          (isAccepted ?
+            '<button class="btn btn-primary btn-sm btn-block chat-trigger-btn" data-id="' + d.id + '">' +
+              '💬 Chat with NGO to Take Over' +
+            '</button>' +
+            '<button class="btn btn-ghost btn-sm mark-completed-btn" data-id="' + d.id + '" title="Mark handover as finished">Done</button>'
+          : '') +
+          (isPending ?
+            '<button class="btn btn-gold btn-sm simulate-accept-btn" data-id="' + d.id + '" title="Simulate NGO accepting this medicine for demo">' +
+              '⚡ Simulate NGO Acceptance' +
+            '</button>' +
+            '<button class="btn btn-ghost btn-sm delete-btn" data-id="' + d.id + '">Remove</button>'
+          : '') +
+          (isCompleted ?
+            '<div style="font-size:0.82rem; color:var(--green-700); font-weight:600; padding:6px 0;">🎉 Handover Completed! Thank you for donating.</div>'
+          : '') +
+        '</div>' +
+      '</div>';
+    });
+
+    container.innerHTML = html;
+  }
+
+  function escapeHtml(str){
+    return String(str == null ? '' : str).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  // Filter switching
+  document.querySelector('.filter-pills').addEventListener('click', function(e){
+    if (!e.target.classList.contains('filter-btn')) return;
+    document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+    e.target.classList.add('active');
+    currentFilter = e.target.getAttribute('data-filter');
+    renderDonations();
+  });
+
+  // ================= PROFILE EDIT MODAL & LOGOUT =================
+  var profileModal = document.getElementById('profileEditModal');
+  var userChip = document.getElementById('userProfileChip');
+  var closeProfileBtn = document.getElementById('closeProfileModalBtn');
+  var cancelProfileBtn = document.getElementById('cancelProfileBtn');
+  var profileForm = document.getElementById('profileEditForm');
+  var logoutBtn = document.getElementById('logoutBtn');
+
+  function openProfileModal(){
+    document.getElementById('editFirstName').value = user.firstName || '';
+    document.getElementById('editLastName').value = user.lastName || '';
+    document.getElementById('editDob').value = user.dob || '';
+    document.getElementById('editAge').value = user.age || (user.dob ? calculateAgeFromDob(user.dob) : '');
+    document.getElementById('editCity').value = user.city || '';
+    document.getElementById('editRegion').value = user.region || '';
+    document.getElementById('editPincode').value = user.pincode || '';
+    document.getElementById('editGender').value = user.gender || '';
+    document.getElementById('editPhone').value = user.phone || '';
+    profileModal.classList.add('open');
+  }
+
+  function closeProfileModal(){
+    profileModal.classList.remove('open');
+  }
+
+  userChip.addEventListener('click', openProfileModal);
+  closeProfileBtn.addEventListener('click', closeProfileModal);
+  cancelProfileBtn.addEventListener('click', closeProfileModal);
+  profileModal.addEventListener('click', function(e){
+    if (e.target === profileModal) closeProfileModal();
+  });
+
+  // Real-time Age recalculation in Profile Edit
+  function updateProfileAge(){
+    var age = calculateAgeFromDob(document.getElementById('editDob').value);
+    document.getElementById('editAge').value = age;
+  }
+  document.getElementById('editDob').addEventListener('change', updateProfileAge);
+  document.getElementById('editDob').addEventListener('input', updateProfileAge);
+
+  // Save Profile Changes
+  profileForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var fName = document.getElementById('editFirstName').value.trim();
+    var lName = document.getElementById('editLastName').value.trim();
+    var dob = document.getElementById('editDob').value;
+    var age = calculateAgeFromDob(dob) || document.getElementById('editAge').value.trim();
+    var city = document.getElementById('editCity').value.trim();
+    var region = document.getElementById('editRegion').value.trim();
+    var pincode = document.getElementById('editPincode').value.trim();
+    var gender = document.getElementById('editGender').value;
+    var phone = document.getElementById('editPhone').value.trim();
+
+    if (!fName || !city) {
+      toast('Please enter your first name and city');
+      return;
+    }
+
+    user.firstName = fName;
+    user.lastName = lName;
+    user.dob = dob;
+    user.age = age;
+    user.city = city;
+    user.region = region;
+    user.pincode = pincode;
+    user.gender = gender;
+    user.phone = phone;
+
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+    syncUserUI();
+    toast('✅ Profile updated successfully!');
+    closeProfileModal();
+  });
+
+  // Logout Handler
+  logoutBtn.addEventListener('click', function(){
+    if (confirm('Are you sure you want to log out from your donor account?')) {
+      localStorage.removeItem(STORAGE_KEY_USER);
+      toast('Logged out successfully.');
+      setTimeout(function(){
+        window.location.href = 'index.html';
+      }, 500);
+    }
+  });
+
+  // ================= LIST MEDICINE MODAL & PHOTO UPLOAD =================
+  var modal = document.getElementById('listMedicineModal');
+  var openModalBtn = document.getElementById('openListModalBtn');
+  var closeModalBtn = document.getElementById('closeListModalBtn');
+  var cancelBtn = document.getElementById('cancelListBtn');
+
+  var currentFrontPhoto = '';
+  var currentBackPhoto = '';
+
+  var frontInput = document.getElementById('frontPhotoInput');
+  var backInput = document.getElementById('backPhotoInput');
+  var frontPreviewWrap = document.getElementById('frontPreviewWrap');
+  var backPreviewWrap = document.getElementById('backPreviewWrap');
+  var frontPlaceholder = document.getElementById('frontPlaceholder');
+  var backPlaceholder = document.getElementById('backPlaceholder');
+  var frontPreviewImg = document.getElementById('frontPreviewImg');
+  var backPreviewImg = document.getElementById('backPreviewImg');
+  var removeFrontBtn = document.getElementById('removeFrontPhotoBtn');
+  var removeBackBtn = document.getElementById('removeBackPhotoBtn');
+  var loadSamplePhotosBtn = document.getElementById('loadSamplePhotosBtn');
+
+  function setFrontPhoto(dataUrl){
+    currentFrontPhoto = dataUrl;
+    frontPreviewImg.src = dataUrl;
+    frontPreviewWrap.style.display = 'flex';
+    frontPlaceholder.style.display = 'none';
+    document.getElementById('frontDropzone').classList.add('has-photo');
+  }
+
+  function clearFrontPhoto(){
+    currentFrontPhoto = '';
+    frontPreviewImg.src = '';
+    frontInput.value = '';
+    frontPreviewWrap.style.display = 'none';
+    frontPlaceholder.style.display = 'flex';
+    document.getElementById('frontDropzone').classList.remove('has-photo');
+  }
+
+  function setBackPhoto(dataUrl){
+    currentBackPhoto = dataUrl;
+    backPreviewImg.src = dataUrl;
+    backPreviewWrap.style.display = 'flex';
+    backPlaceholder.style.display = 'none';
+    document.getElementById('backDropzone').classList.add('has-photo');
+  }
+
+  function clearBackPhoto(){
+    currentBackPhoto = '';
+    backPreviewImg.src = '';
+    backInput.value = '';
+    backPreviewWrap.style.display = 'none';
+    backPlaceholder.style.display = 'flex';
+    document.getElementById('backDropzone').classList.remove('has-photo');
+  }
+
+  frontInput.addEventListener('change', function(e){
+    var file = e.target.files && e.target.files[0];
+    if (file) {
+      var reader = new FileReader();
+      reader.onload = function(evt){ setFrontPhoto(evt.target.result); };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  backInput.addEventListener('change', function(e){
+    var file = e.target.files && e.target.files[0];
+    if (file) {
+      var reader = new FileReader();
+      reader.onload = function(evt){ setBackPhoto(evt.target.result); };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  removeFrontBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    clearFrontPhoto();
+  });
+
+  document.getElementById('frontDropzone').addEventListener('click', function(e){
+    if (e.target.closest('#removeFrontPhotoBtn')) return;
+    frontInput.click();
+  });
+
+  document.getElementById('backDropzone').addEventListener('click', function(e){
+    if (e.target.closest('#removeBackPhotoBtn')) return;
+    backInput.click();
+  });
+
+  removeBackBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    clearBackPhoto();
+  });
+
+  loadSamplePhotosBtn.addEventListener('click', function(){
+    setFrontPhoto(SAMPLE_FRONT_PHOTO);
+    setBackPhoto(SAMPLE_BACK_PHOTO);
+    toast('Sample front & back photos loaded!');
+  });
+
+  function openModal(){ modal.classList.add('open'); }
+  function closeModal(){
+    modal.classList.remove('open');
+    clearFrontPhoto();
+    clearBackPhoto();
+  }
+
+  openModalBtn.addEventListener('click', openModal);
+  closeModalBtn.addEventListener('click', closeModal);
+  cancelBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', function(e){
+    if (e.target === modal) closeModal();
+  });
+
+  // Real-time Expiry Date Check
+  var expiryInput = document.getElementById('medExpiry');
+  var expiryAlert = document.getElementById('expiryAlert');
+  var submitMedBtn = document.getElementById('submitMedBtn');
+
+  expiryInput.addEventListener('change', function(){
+    var val = this.value;
+    if (!val) {
+      expiryAlert.classList.remove('show');
+      submitMedBtn.disabled = false;
+      return;
+    }
+    var selected = new Date(val);
+    var today = new Date();
+    today.setHours(0,0,0,0);
+
+    // If medicine is already expired
+    if (selected <= today) {
+      expiryAlert.classList.add('show');
+      expiryAlert.textContent = '❌ This medicine has already expired. Expired medicines cannot be donated according to safety regulations.';
+      submitMedBtn.disabled = true;
+    } else {
+      expiryAlert.classList.remove('show');
+      submitMedBtn.disabled = false;
+    }
+  });
+
+  // Add new medicine listing
+  document.getElementById('listMedicineForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = document.getElementById('medName').value.trim();
+    var category = document.getElementById('medCategory').value;
+    var quantity = document.getElementById('medQuantity').value.trim();
+    var expiry = document.getElementById('medExpiry').value;
+    var batch = document.getElementById('medBatch').value.trim();
+    var condition = document.getElementById('medCondition').value;
+    var location = document.getElementById('medLocation').value.trim();
+    var notes = document.getElementById('medNotes').value.trim();
+
+    if (!name || !quantity || !expiry || !location) {
+      toast('Please fill in all required fields');
+      return;
+    }
+
+    var selected = new Date(expiry);
+    var today = new Date();
+    today.setHours(0,0,0,0);
+    if (selected <= today) {
+      toast('Expired medicine cannot be listed for patient donation');
+      return;
+    }
+
+    var newMed = {
+      id: 'med-' + Date.now(),
+      name: name,
+      category: category,
+      quantity: quantity,
+      batch: batch || 'Not provided',
+      expiry: expiry,
+      condition: condition,
+      location: location,
+      notes: notes,
+      frontPhoto: currentFrontPhoto || SAMPLE_FRONT_PHOTO,
+      backPhoto: currentBackPhoto || SAMPLE_BACK_PHOTO,
+      status: 'pending',
+      statusText: 'Pending NGO Review',
+      listedDate: 'Just now'
+    };
+
+    var list = getDonations();
+    list.unshift(newMed);
+    saveDonations(list);
+
+    toast('🎉 Medicine listed with front & back photos! Nearby NGOs are being notified.');
+    this.reset();
+    closeModal();
+  });
+
+  // Card actions (Chat, Simulate acceptance, Done, Delete)
+  document.getElementById('donationsContainer').addEventListener('click', function(e){
+    var chatBtn = e.target.closest('.chat-trigger-btn');
+    var simBtn = e.target.closest('.simulate-accept-btn');
+    var compBtn = e.target.closest('.mark-completed-btn');
+    var delBtn = e.target.closest('.delete-btn');
+
+    if (chatBtn) {
+      var id = chatBtn.getAttribute('data-id');
+      var list = getDonations();
+      var item = list.find(function(d){ return d.id === id; });
+      if (item) openChatForMed(item);
+      return;
+    }
+
+    if (simBtn) {
+      var id = simBtn.getAttribute('data-id');
+      var list = getDonations();
+      var item = list.find(function(d){ return d.id === id; });
+      if (item) {
+        item.status = 'accepted';
+        item.statusText = 'Accepted by NGO';
+        item.acceptedBy = {
+          name: 'CareHealth Foundation Clinic',
+          doctor: 'Dr. Anita Rao',
+          distance: '1.8 km away'
+        };
+        saveDonations(list);
+        toast('✅ CareHealth Foundation Clinic accepted your ' + item.name + '!');
+        setTimeout(function(){
+          openChatForMed(item);
+        }, 600);
+      }
+      return;
+    }
+
+    if (compBtn) {
+      var id = compBtn.getAttribute('data-id');
+      var list = getDonations();
+      var item = list.find(function(d){ return d.id === id; });
+      if (item) {
+        item.status = 'completed';
+        item.statusText = 'Handover Complete';
+        saveDonations(list);
+        toast('🎉 Donation marked as completed! Thank you for saving lives.');
+      }
+      return;
+    }
+
+    if (delBtn) {
+      var id = delBtn.getAttribute('data-id');
+      var list = getDonations().filter(function(d){ return d.id !== id; });
+      saveDonations(list);
+      toast('Listing removed.');
+      return;
+    }
+  });
+
+  // ================= CHAT SYSTEM =================
+  var chatDrawer = document.getElementById('chatDrawer');
+  var closeChatBtn = document.getElementById('closeChatBtn');
+  var chatMessages = document.getElementById('chatMessages');
+  var chatForm = document.getElementById('chatForm');
+  var chatInput = document.getElementById('chatInput');
+  var openChatNavBtn = document.getElementById('openChatBtn');
+
+  var currentActiveMed = null;
+
+  function loadChatMessages(medId){
+    var allChats = {};
+    try {
+      allChats = JSON.parse(localStorage.getItem(STORAGE_KEY_CHAT)) || {};
+    } catch(e){}
+
+    if (!allChats[medId]) {
+      // Initial default welcome from the NGO
+      allChats[medId] = [
+        {
+          sender: 'ngo',
+          text: 'Hello ' + (user.firstName || 'friend') + '! We have reviewed and accepted your donation. We can send a verified clinic volunteer to pick it up. What time works best for you today or tomorrow?',
+          time: 'Just now'
+        }
+      ];
+      localStorage.setItem(STORAGE_KEY_CHAT, JSON.stringify(allChats));
+    }
+    return allChats[medId];
+  }
+
+  function saveChatMessage(medId, msgObj){
+    var allChats = {};
+    try {
+      allChats = JSON.parse(localStorage.getItem(STORAGE_KEY_CHAT)) || {};
+    } catch(e){}
+    if (!allChats[medId]) allChats[medId] = [];
+    allChats[medId].push(msgObj);
+    localStorage.setItem(STORAGE_KEY_CHAT, JSON.stringify(allChats));
+  }
+
+  function renderChat(medItem){
+    currentActiveMed = medItem;
+    var ngo = medItem.acceptedBy || { name: 'Seva Care Clinic', doctor: 'Dr. Verma', distance: '2.4 km away' };
+
+    document.getElementById('chatNgoName').innerHTML = escapeHtml(ngo.name) + ' <span class="badge badge-accepted" style="font-size:0.65rem; padding:2px 6px;">Verified</span>';
+    document.getElementById('chatNgoSub').textContent = 'Coordinator: ' + (ngo.doctor || 'Volunteer') + ' • ' + (ngo.distance || 'Nearby');
+    document.getElementById('chatAvatar').textContent = ngo.name.charAt(0);
+    document.getElementById('chatMedName').textContent = medItem.name;
+
+    var messages = loadChatMessages(medItem.id);
+    var html = '';
+    messages.forEach(function(m){
+      var isDonor = m.sender === 'donor';
+      html += '' +
+      '<div class="msg ' + (isDonor ? 'msg-donor' : 'msg-ngo') + '">' +
+        '<div>' + escapeHtml(m.text) + '</div>' +
+        '<div class="msg-time">' + escapeHtml(m.time) + '</div>' +
+      '</div>';
+    });
+
+    chatMessages.innerHTML = html;
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function openChatForMed(medItem){
+    renderChat(medItem);
+    chatDrawer.classList.add('open');
+    chatInput.focus();
+  }
+
+  openChatNavBtn.addEventListener('click', function(){
+    var list = getDonations();
+    var acceptedItem = list.find(function(d){ return d.status === 'accepted'; }) || list[0];
+    if (acceptedItem) {
+      openChatForMed(acceptedItem);
+    } else {
+      toast('No active NGO chats yet. List a medicine or accept one to start chatting.');
+    }
+  });
+
+  closeChatBtn.addEventListener('click', function(){
+    chatDrawer.classList.remove('open');
+  });
+
+  // Sending message
+  function sendDonorMessage(text){
+    if (!text || !currentActiveMed) return;
+    var now = new Date();
+    var timeStr = now.getHours() + ':' + (now.getMinutes() < 10 ? '0' : '') + now.getMinutes();
+
+    var donorMsg = {
+      sender: 'donor',
+      text: text,
+      time: timeStr
+    };
+    saveChatMessage(currentActiveMed.id, donorMsg);
+    renderChat(currentActiveMed);
+
+    // Simulated NGO response
+    setTimeout(function(){
+      var ngoReplies = [
+        "Thank you! Our volunteer Rajesh will arrive at that time with a clinic ID card and a temperature-controlled collection bag.",
+        "Got it! We have noted the time. The volunteer will call you 15 minutes before reaching your location.",
+        "Perfect. We appreciate you donating unexpired medicine to help needy patients. See you soon!",
+        "Noted! We have updated the pickup schedule in our clinic roster."
+      ];
+      var replyText = ngoReplies[Math.floor(Math.random() * ngoReplies.length)];
+      var replyNow = new Date();
+      var replyTime = replyNow.getHours() + ':' + (replyNow.getMinutes() < 10 ? '0' : '') + replyNow.getMinutes();
+
+      var ngoMsg = {
+        sender: 'ngo',
+        text: replyText,
+        time: replyTime
+      };
+      saveChatMessage(currentActiveMed.id, ngoMsg);
+      renderChat(currentActiveMed);
+    }, 1200);
+  }
+
+  chatForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var text = chatInput.value.trim();
+    if (!text) return;
+    chatInput.value = '';
+    sendDonorMessage(text);
+  });
+
+  // Quick reply pills
+  document.getElementById('quickReplies').addEventListener('click', function(e){
+    var pill = e.target.closest('.quick-pill');
+    if (!pill) return;
+    var msg = pill.getAttribute('data-msg');
+    sendDonorMessage(msg);
+  });
+
+  // Initial render
+  renderDonations();
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MedDonate — Give medicine a second life</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,680&family=Work+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div id="shell">
+    <header class="top">
+      <div class="brand">
+        <span class="mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M7 17L17 7M9.5 4.5L4.5 9.5C2.7 11.3 2.7 14.2 4.5 16C6.3 17.8 9.2 17.8 11 16L16 11C17.8 9.2 17.8 6.3 16 4.5C14.2 2.7 11.3 2.7 9.5 4.5Z"
+              stroke="white" stroke-width="1.8" stroke-linecap="round" />
+          </svg></span>
+        MedDonate
+      </div>
+      <a href="donor-dashboard.html" style="font-size:0.85rem; font-weight:600; color:var(--green-700); text-decoration:none; padding:7px 14px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-pill); display:inline-flex; align-items:center; gap:6px;">
+        Donor Dashboard &rarr;
+      </a>
+    </header>
+    <main>
+      <section class="hero">
+        <div>
+          <h1>Unused medicine finds<br>somewhere to go.</h1>
+          <p class="lede">MedDonate connects people with unexpired, unused medicine to verified NGOs and clinics nearby
+            — with photo proof, location matching, and a straightforward review.</p>
+        </div>
+        <div class="choice-row">
+          <a href="donor-signup.html" class="choice-card donor"
+            aria-label="Continue as someone who wants to donate">
+            <div class="icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M4 9h16v11H4V9z" stroke="#C8862A" stroke-width="1.7" />
+                <path d="M12 9v11M4 9V6a2 2 0 012-2h1a3 3 0 013 3v2M12 9V7a3 3 0 013-3h1a2 2 0 012 2v3" stroke="#C8862A"
+                  stroke-width="1.7" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <h3>I want to donate</h3>
+            <p>List medicine you no longer need, with a quick photo and location.</p>
+          </a>
+          <div class="choice-card ngo" tabindex="0" role="button" aria-label="Continue as an NGO or clinic">
+            <div class="icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M5 21V5a1 1 0 011-1h6a1 1 0 011 1v16M13 21v-9a1 1 0 011-1h4a1 1 0 011 1v9M9 8h.01M9 11h.01M9 14h.01"
+                  stroke="#1F5C4E" stroke-width="1.7" stroke-linecap="round" />
+                <path d="M3 21h18" stroke="#1F5C4E" stroke-width="1.7" stroke-linecap="round" />
+              </svg>
+            </div>
+            <h3>I&rsquo;m an NGO / clinic</h3>
+            <p>Get verified, then review and accept donations near you.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    try {
+      if (localStorage.getItem('meddonate_user')) {
+        var donorCard = document.querySelector('.choice-card.donor');
+        if (donorCard) donorCard.href = 'donor-dashboard.html';
+      }
+    } catch(e){}
+  </script>
+</body>
+
+</html>
