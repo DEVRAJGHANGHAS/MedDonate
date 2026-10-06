@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedDonate — NGO / Clinic Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,680&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="ngo-dashboard.css">
+</head>
+<body>
+<div id="shell">
+
+  <!-- ===== TOP NAV ===== -->
+  <header class="top">
+    <a href="index.html" class="brand" title="Back to Home">
+      <span class="mark">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+          <path d="M7 17L17 7M9.5 4.5L4.5 9.5C2.7 11.3 2.7 14.2 4.5 16C6.3 17.8 9.2 17.8 11 16L16 11C17.8 9.2 17.8 6.3 16 4.5C14.2 2.7 11.3 2.7 9.5 4.5Z" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </span>
+      MedDonate
+    </a>
+    <div class="nav-right">
+      <button class="btn btn-ghost btn-sm" id="openChatListBtn" title="Open donor messages">
+        💬 Messages <span id="unreadBadge" class="badge badge-new" style="display:none; margin-left:4px; padding:2px 6px;">0</span>
+      </button>
+      <div class="ngo-chip" id="ngoProfileChip" title="View profile">
+        <div class="ngo-avatar" id="ngoAvatar">A</div>
+        <span id="ngoNameDisplay">NGO</span>
+        <span class="verified-dot" title="Verified by Admin"></span>
+        <span style="font-size:0.72rem; color:var(--ink-soft);">✏️</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero-banner" id="heroBanner">
+    <div>
+      <h1 id="heroTitle">Welcome, Healthcare Partner!</h1>
+      <p id="heroSubtitle">Review nearby donor medicine listings, accept what your facility needs, and coordinate pickups directly with donors.</p>
+      <div class="hero-meta">
+        <span class="hero-meta-badge">
+          <span class="verified-dot"></span> Admin Verified
+        </span>
+        <span class="hero-meta-badge" id="heroOrgBadge">
+          📍 Loading location…
+        </span>
+        <span class="hero-meta-badge" id="heroCategory">
+          🏥 Healthcare NGO
+        </span>
+      </div>
+    </div>
+    <div class="hero-actions">
+      <button class="btn btn-gold" id="simulateDemoBtn" title="Add simulated donor listings for testing">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        Simulate Incoming Listings
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== SERVICE RANGE BAR ===== -->
+  <div class="range-bar">
+    <div class="range-label">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+      Service Range:
+    </div>
+    <div class="range-pills">
+      <button class="range-pill" data-range="5">Within 5 km</button>
+      <button class="range-pill active" data-range="10">Within 10 km</button>
+      <button class="range-pill" data-range="25">Within 25 km</button>
+      <button class="range-pill" data-range="50">Entire City</button>
+    </div>
+    <div class="live-indicator">
+      <span class="live-dot"></span>
+      <span id="liveStatus">Live — checking for new listings…</span>
+    </div>
+  </div>
+
+  <!-- ===== STATS ===== -->
+  <section class="stats-grid">
+    <div class="stat-card">
+      <div class="val" id="statNew" style="color:var(--blue-600);">0</div>
+      <div class="lbl">New Incoming</div>
+      <div class="change" id="statNewChange"></div>
+    </div>
+    <div class="stat-card">
+      <div class="val" id="statAccepted" style="color:var(--green-700);">0</div>
+      <div class="lbl">Accepted</div>
+      <div class="change" id="statAccChange"></div>
+    </div>
+    <div class="stat-card">
+      <div class="val" id="statRejected" style="color:var(--red-600);">0</div>
+      <div class="lbl">Rejected</div>
+      <div class="change"></div>
+    </div>
+    <div class="stat-card">
+      <div class="val" id="statPickedUp" style="color:var(--gold-600);">0</div>
+      <div class="lbl">Picked Up</div>
+      <div class="change" id="statPickChange"></div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION HEADER ===== -->
+  <div class="section-header">
+    <h2>
+      Incoming Medicine Donations
+      <span id="listingCount" style="font-size:0.85rem; font-weight:500; color:var(--ink-soft); margin-left:8px;"></span>
+    </h2>
+    <div class="filter-pills">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="new">New Incoming</button>
+      <button class="filter-btn" data-filter="accepted">Accepted</button>
+      <button class="filter-btn" data-filter="rejected">Rejected</button>
+      <button class="filter-btn" data-filter="pickedup">Picked Up</button>
+    </div>
+  </div>
+
+  <!-- ===== LISTINGS GRID ===== -->
+  <div class="listings-grid" id="listingsContainer">
+    <!-- Rendered dynamically -->
+  </div>
+
+</div><!-- /shell -->
+
+
+<!-- ===== REJECTION MODAL ===== -->
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div>
+        <h3>Decline Donation</h3>
+        <p style="font-size:0.8rem; color:var(--ink-soft); margin:3px 0 0;">Please select a reason — it will be shared with the donor so they can seek another NGO.</p>
+      </div>
+      <button class="close-btn" id="closeRejectModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Reason for Rejection *</label>
+        <div class="radio-group" id="rejectReasonGroup">
+          <div class="radio-option" data-val="We currently have sufficient stock of this medicine.">
+            <input type="radio" name="rejectReason" id="rr1">
+            <label for="rr1">We already have sufficient stock of this medicine.</label>
+          </div>
+          <div class="radio-option" data-val="The medicine is close to expiry and cannot be used in time.">
+            <input type="radio" name="rejectReason" id="rr2">
+            <label for="rr2">Medicine too close to expiry date.</label>
+          </div>
+          <div class="radio-option" data-val="The donor location is outside our pickup service range.">
+            <input type="radio" name="rejectReason" id="rr3">
+            <label for="rr3">Donor location outside our operational range.</label>
+          </div>
+          <div class="radio-option" data-val="The medicine type or category does not match our facility's requirements.">
+            <input type="radio" name="rejectReason" id="rr4">
+            <label for="rr4">Medicine type/category not suitable for our facility.</label>
+          </div>
+          <div class="radio-option" data-val="The medicine packaging appears damaged or integrity is questionable.">
+            <input type="radio" name="rejectReason" id="rr5">
+            <label for="rr5">Packaging damage or quality concerns from the photos.</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:14px;">
+        <label for="rejectNoteField">Additional note for donor <span style="font-weight:400;">(optional)</span></label>
+        <textarea id="rejectNoteField" placeholder="e.g. Thank you for your generosity. We encourage you to try MediCare Charitable Clinic, Plot 14, Sector 7…" rows="3"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="cancelRejectBtn">Cancel</button>
+      <button class="btn btn-danger" id="confirmRejectBtn">Decline & Notify Donor</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHAT DRAWER ===== -->
+<div class="chat-overlay" id="chatOverlay"></div>
+<div class="chat-drawer" id="chatDrawer">
+  <div class="chat-head">
+    <div class="info">
+      <h4 id="chatDonorName">Donor Name</h4>
+      <p id="chatMedName">Medicine · 3.2 km away</p>
+    </div>
+    <div class="chat-head-actions">
+      <button class="call-btn-head" id="callDonorBtn" title="Call donor">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.73 9.5a19.79 19.79 0 01-3-8.59A2 2 0 012.68 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9.91a16 16 0 006.13 6.13l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" stroke="currentColor" stroke-width="2"/></svg>
+        Call
+      </button>
+      <button class="close-drawer-btn" id="closeChatDrawer">&times;</button>
+    </div>
+  </div>
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="chat-quick-replies" id="quickReplies"></div>
+  <div class="chat-input-bar">
+    <textarea id="chatInput" placeholder="Type a message…" rows="1"></textarea>
+    <button class="send-btn" id="sendChatBtn" title="Send">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2L15 22 11 13 2 9l20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ===== NGO PROFILE PANEL ===== -->
+<div class="panel-overlay" id="panelOverlay"></div>
+<div class="side-panel" id="ngoProfilePanel">
+  <div class="panel-head">
+    <h3>Organisation Profile</h3>
+    <button class="close-btn" id="closePanelBtn">&times;</button>
+  </div>
+  <div class="panel-body" id="profilePanelBody"></div>
+</div>
+
+<!-- ===== CALL SIMULATION POPUP ===== -->
+<div class="call-popup" id="callPopup">
+  <div class="call-avatar-lg" id="callAvatarLg">D</div>
+  <div class="call-name" id="callNameLg">Donor Name</div>
+  <div class="call-status" id="callStatusTxt">Calling…</div>
+  <div class="call-actions">
+    <button class="call-action-btn call-mute" id="callMuteBtn" title="Mute">🎤</button>
+    <button class="call-action-btn call-end" id="callEndBtn" title="End call">📵</button>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div id="toast"></div>
+
+
+<script>
+(function(){
+  'use strict';
+
+  /* ============================================================
+     DATA & STATE
+     ============================================================ */
+  var ngoData = null;
+  var currentRange = 10;
+  var currentFilter = 'all';
+  var listings = [];
+  var activeChatId = null;
+  var rejectTargetId = null;
+  var selectedRejectReason = '';
+  var callTimer = null;
+  var liveInterval = null;
+  var lastLiveCheck = Date.now();
+
+  // Load NGO org data from localStorage
+  try {
+    var raw = localStorage.getItem('meddonate_ngo');
+    if (raw) ngoData = JSON.parse(raw);
+  } catch(e) {}
+
+  // If no verified NGO, inject sample data
+  if (!ngoData || !ngoData.org || !ngoData.org.name) {
+    ngoData = {
+      phoneVerified: true, emailVerified: true,
+      phone: '9811234567', email: 'contact@aarogyaseva.org',
+      org: {
+        name: 'Aarogya Seva Medical Trust',
+        category: 'Registered Non-Governmental Organisation (NGO)',
+        regNumber: 'DL/NGO/2021/847291-MED',
+        address: 'Plot 42, Health Mission Complex, Institutional Area',
+        city: 'New Delhi', state: 'Delhi', pincode: '110016',
+        timings: 'Mon-Sat: 09:00 AM - 07:00 PM',
+        contactName: 'Dr. Sunita Sharma',
+        designation: 'Medical Director & Managing Trustee',
+        contactPhone: '9811234567',
+        adminStatus: 'approved',
+        appId: 'MED-NGO-2026-8942'
+      }
+    };
+  }
+
+  // Demo donation pool (simulates what donor dashboard would push to a shared store)
+  var DEMO_POOL = [
+    {
+      id: 'd1', name: 'Amoxicillin 500mg', category: 'Antibiotic',
+      qty: '14 tablets', expiry: futureDateStr(4),
+      donor: 'Rahul Sharma', phone: '9821111111', city: 'New Delhi',
+      distance: 2.4, frontImg: '', backImg: '',
+      notes: 'Unopened strip, purchased last month.',
+      listedAt: pastDateStr(0.5), status: 'new'
+    },
+    {
+      id: 'd2', name: 'Metformin 500mg', category: 'Diabetes',
+      qty: '30 tablets', expiry: futureDateStr(10),
+      donor: 'Priya Mehta', phone: '9832222222', city: 'New Delhi',
+      distance: 6.7, frontImg: '', backImg: '',
+      notes: 'Doctor switched my medication. Fully sealed box.',
+      listedAt: pastDateStr(1.2), status: 'new'
+    },
+    {
+      id: 'd3', name: 'Omeprazole 20mg', category: 'Gastric',
+      qty: '2 strips × 10 caps', expiry: futureDateStr(8),
+      donor: 'Arun Gupta', phone: '9843333333', city: 'New Delhi',
+      distance: 3.1, frontImg: '', backImg: '',
+      notes: 'No longer needed after treatment.',
+      listedAt: pastDateStr(2), status: 'new'
+    },
+    {
+      id: 'd4', name: 'Cetirizine 10mg', category: 'Antihistamine',
+      qty: '20 tablets', expiry: futureDateStr(1.5),
+      donor: 'Ananya Bose', phone: '9854444444', city: 'New Delhi',
+      distance: 9.2, frontImg: '', backImg: '',
+      notes: 'Season over, tablets left unused.',
+      listedAt: pastDateStr(3), status: 'new'
+    },
+    {
+      id: 'd5', name: 'Paracetamol 650mg', category: 'Analgesic',
+      qty: '1 strip × 15 tabs', expiry: futureDateStr(14),
+      donor: 'Vikram Singh', phone: '9865555555', city: 'New Delhi',
+      distance: 18, frontImg: '', backImg: '',
+      notes: 'Bought extra during travel, surplus.',
+      listedAt: pastDateStr(0.3), status: 'new'
+    },
+    {
+      id: 'd6', name: 'Atorvastatin 10mg', category: 'Cardiac',
+      qty: '28 tablets', expiry: futureDateStr(22),
+      donor: 'Kavita Nair', phone: '9876666666', city: 'New Delhi',
+      distance: 4.5, frontImg: '', backImg: '',
+      notes: 'Dosage changed by cardiologist.',
+      listedAt: pastDateStr(4), status: 'new'
+    }
+  ];
+
+  function futureDateStr(months) {
+    var d = new Date();
+    d.setMonth(d.getMonth() + months);
+    return d.toISOString().split('T')[0];
+  }
+  function pastDateStr(hours) {
+    var d = new Date(Date.now() - hours * 3600000);
+    return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) + ' today';
+  }
+
+  // Load persisted listings from localStorage
+  try {
+    var persisted = localStorage.getItem('meddonate_ngo_listings');
+    if (persisted) listings = JSON.parse(persisted);
+  } catch(e) {}
+
+  function saveListings() {
+    try { localStorage.setItem('meddonate_ngo_listings', JSON.stringify(listings)); } catch(e) {}
+  }
+
+  /* ============================================================
+     UTILITY
+     ============================================================ */
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function expiryDaysLeft(dateStr) {
+    if (!dateStr) return 999;
+    var exp = new Date(dateStr);
+    var now = new Date();
+    exp.setHours(23, 59, 59);
+    return Math.round((exp - now) / 86400000);
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr);
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  /* ============================================================
+     INITIALISE HEADER & META
+     ============================================================ */
+  function initHeader() {
+    var org = ngoData.org;
+    var initials = org.name.split(' ').slice(0, 2).map(function(w){ return w[0]; }).join('').toUpperCase();
+    document.getElementById('ngoAvatar').textContent = initials;
+    document.getElementById('ngoNameDisplay').textContent = org.name.split(' ').slice(0, 3).join(' ');
+    document.getElementById('heroTitle').textContent = 'Welcome, ' + org.name + '!';
+    document.getElementById('heroOrgBadge').textContent = '📍 ' + org.city + ', ' + org.state;
+    document.getElementById('heroCategory').textContent = '🏥 ' + org.category.split('(')[0].trim();
+  }
+
+  /* ============================================================
+     STATS
+     ============================================================ */
+  function updateStats() {
+    var total = listings.length;
+    var newCount = listings.filter(function(l){ return l.status === 'new'; }).length;
+    var accCount = listings.filter(function(l){ return l.status === 'accepted'; }).length;
+    var rejCount = listings.filter(function(l){ return l.status === 'rejected'; }).length;
+    var pickCount = listings.filter(function(l){ return l.status === 'pickedup'; }).length;
+
+    animateVal('statNew', newCount);
+    animateVal('statAccepted', accCount);
+    animateVal('statRejected', rejCount);
+    animateVal('statPickedUp', pickCount);
+
+    if (newCount > 0) {
+      document.getElementById('statNewChange').textContent = '+' + newCount + ' awaiting review';
+    }
+
+    // Unread badge: count accepted listings with chat messages not from NGO
+    var unread = 0;
+    listings.forEach(function(l){
+      if (l.status === 'accepted' && l.chat && l.chat.length > 0) {
+        var lastMsg = l.chat[l.chat.length - 1];
+        if (lastMsg.from === 'donor') unread++;
+      }
+    });
+    var badge = document.getElementById('unreadBadge');
+    if (unread > 0) {
+      badge.textContent = unread;
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  var _animVals = {};
+  function animateVal(id, target) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var current = _animVals[id] || 0;
+    var step = (target - current) / 12;
+    if (Math.abs(target - current) < 1) { el.textContent = target; _animVals[id] = target; return; }
+    var raf;
+    function tick() {
+      current += step;
+      if ((step > 0 && current >= target) || (step < 0 && current <= target)) {
+        current = target;
+      }
+      el.textContent = Math.round(current);
+      _animVals[id] = Math.round(current);
+      if (current !== target) raf = requestAnimationFrame(tick);
+    }
+    cancelAnimationFrame(raf);
+    tick();
+  }
+
+  /* ============================================================
+     RENDER LISTINGS
+     ============================================================ */
+  function filteredListings() {
+    var result = listings.filter(function(l) {
+      if (currentFilter === 'all') return true;
+      return l.status === currentFilter;
+    });
+    // Range filter for new listings
+    result = result.filter(function(l) {
+      if (l.status !== 'new') return true; // show accepted/rejected regardless of range
+      return l.distance <= currentRange;
+    });
+    // Sort: new first, then by distance
+    result.sort(function(a, b) {
+      if (a.status === 'new' && b.status !== 'new') return -1;
+      if (a.status !== 'new' && b.status === 'new') return 1;
+      return a.distance - b.distance;
+    });
+    return result;
+  }
+
+  function renderListings() {
+    var container = document.getElementById('listingsContainer');
+    if (!container) return;
+
+    var items = filteredListings();
+    document.getElementById('listingCount').textContent = '(' + items.length + ')';
+
+    if (items.length === 0) {
+      container.innerHTML = '<div class="empty-state">' +
+        '<div class="empty-icon">📦</div>' +
+        '<h3>No listings in this view</h3>' +
+        '<p>New incoming donations matching your service range will appear here in real-time.<br>Use the "Simulate Incoming Listings" button to load demo data.</p>' +
+        '</div>';
+      return;
+    }
+
+    container.innerHTML = items.map(function(l) {
+      return buildCard(l);
+    }).join('');
+
+    updateStats();
+  }
+
+  function buildCard(l) {
+    var daysLeft = expiryDaysLeft(l.expiry);
+    var isUrgent = daysLeft <= 30;
+
+    var imagePart = '';
+    if (l.frontImg || l.backImg) {
+      if (l.frontImg && l.backImg) {
+        imagePart = '<div class="card-images">' +
+          '<img src="' + l.frontImg + '" alt="Front packaging">' +
+          '<img src="' + l.backImg + '" alt="Back packaging">' +
+          '</div>';
+      } else {
+        imagePart = '<div class="card-images single">' +
+          '<img src="' + (l.frontImg || l.backImg) + '" alt="Medicine photo">' +
+          '</div>';
+      }
+    } else {
+      imagePart = '<div class="card-image-placeholder">' +
+        '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.3"><path d="M4 9h16v11H4V9z"/><path d="M12 9v11M4 9V6a2 2 0 012-2h1a3 3 0 013 3v2M12 9V7a3 3 0 013-3h1a2 2 0 012 2v3"/></svg>' +
+        '<span style="font-size:0.75rem; margin-top:6px;">No photo uploaded</span>' +
+        '</div>';
+    }
+
+    var statusBadge = '';
+    if (l.status === 'new') statusBadge = '<span class="badge badge-new"><span class="live-dot" style="width:6px;height:6px;"></span> New</span>';
+    else if (l.status === 'accepted') statusBadge = '<span class="badge badge-accepted">✓ Accepted</span>';
+    else if (l.status === 'rejected') statusBadge = '<span class="badge badge-rejected">✕ Declined</span>';
+    else if (l.status === 'pickedup') statusBadge = '<span class="badge badge-completed">✓ Picked Up</span>';
+
+    var urgencyWarning = isUrgent && l.status === 'new' ?
+      '<div class="expiry-warning">⚠️ Expires in ' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' — urgent!</div>' : '';
+
+    var rejectionBox = l.status === 'rejected' && l.rejectReason ?
+      '<div class="rejection-reason-box">' +
+        '<strong>Reason shared with donor:</strong> ' + esc(l.rejectReason) +
+        (l.rejectNote ? '<br><span style="color:var(--ink-soft); font-size:0.78rem;">' + esc(l.rejectNote) + '</span>' : '') +
+      '</div>' : '';
+
+    var cardActions = '';
+    if (l.status === 'new') {
+      cardActions = '<div class="card-actions">' +
+        '<button class="btn btn-primary btn-sm" data-action="accept" data-id="' + l.id + '">✓ Accept Donation</button>' +
+        '<button class="btn btn-danger btn-sm" data-action="reject" data-id="' + l.id + '">✕ Decline</button>' +
+        '</div>';
+    } else if (l.status === 'accepted') {
+      var hasUnread = l.chat && l.chat.length > 0 && l.chat[l.chat.length-1].from === 'donor';
+      cardActions = '<div class="card-actions">' +
+        '<button class="btn btn-primary btn-sm" data-action="open-chat" data-id="' + l.id + '">' +
+          '💬 Chat with Donor' + (hasUnread ? ' <span class="badge badge-new" style="padding:1px 5px; font-size:0.68rem;">New</span>' : '') +
+        '</button>' +
+        '<button class="btn btn-call btn-sm" data-action="call-donor" data-id="' + l.id + '">' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.73 9.5a19.79 19.79 0 01-3-8.59A2 2 0 012.68 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 9.91a16 16 0 006.13 6.13l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" stroke="currentColor" stroke-width="2"/></svg>' +
+          ' Call Donor' +
+        '</button>' +
+        '<button class="btn btn-ghost btn-sm" data-action="mark-pickedup" data-id="' + l.id + '">Mark Picked Up</button>' +
+        '</div>';
+    } else if (l.status === 'pickedup') {
+      cardActions = '<div class="card-actions">' +
+        '<span style="font-size:0.82rem; color:var(--green-700); font-weight:600;">✓ Medicine successfully received</span>' +
+        '</div>';
+    }
+
+    return '<div class="listing-card ' + l.status + (l._justArrived ? ' new-incoming' : '') + '" id="card-' + l.id + '">' +
+      imagePart +
+      '<div class="card-body">' +
+        '<div class="card-top">' +
+          '<h3 class="med-name">' + esc(l.name) + '</h3>' +
+          statusBadge +
+        '</div>' +
+        '<div class="med-meta">' +
+          '<span class="meta-pill">💊 ' + esc(l.category) + '</span>' +
+          '<span class="meta-pill">📦 ' + esc(l.qty) + '</span>' +
+          '<span class="meta-pill ' + (isUrgent ? 'text-red' : '') + '">⏳ Exp: ' + formatDate(l.expiry) + '</span>' +
+        '</div>' +
+        (l.notes ? '<p style="font-size:0.8rem; color:var(--ink-soft); margin:0;">' + esc(l.notes) + '</p>' : '') +
+        urgencyWarning +
+        rejectionBox +
+        '<div class="donor-row">' +
+          '<div class="donor-avatar">' + l.donor.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2) + '</div>' +
+          '<span>' + esc(l.donor) + '</span>' +
+          '<span style="color:var(--line);">·</span>' +
+          '<span>' + esc(l.city) + '</span>' +
+          '<span style="color:var(--line);">·</span>' +
+          '<span style="font-size:0.75rem; color:var(--ink-soft);">Listed ' + esc(l.listedAt) + '</span>' +
+          '<span class="distance-badge">📍 ' + l.distance + ' km</span>' +
+        '</div>' +
+      '</div>' +
+      cardActions +
+    '</div>';
+  }
+
+  /* ============================================================
+     DEMO SIMULATION
+     ============================================================ */
+  function simulateDemoListings() {
+    var added = 0;
+    DEMO_POOL.forEach(function(pool) {
+      var already = listings.find(function(l){ return l.id === pool.id; });
+      if (!already) {
+        var listing = Object.assign({}, pool, { chat: [], _justArrived: true });
+        // Randomly assign demo images as data URIs
+        listing.frontImg = getDemoMedSvg(pool.name, 'front');
+        listing.backImg = getDemoMedSvg(pool.name, 'back');
+        listings.push(listing);
+        added++;
+      }
+    });
+    if (added > 0) {
+      saveListings();
+      renderListings();
+      toast('⚡ ' + added + ' demo donor listings loaded!');
+    } else {
+      toast('All demo listings are already loaded.');
+    }
+  }
+
+  function getDemoMedSvg(name, side) {
+    var colors = {front: ['#DCEAE3', '#1F5C4E'], back: ['#FBEBD2', '#C8862A']};
+    var c = colors[side];
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="120" viewBox="0 0 200 120">' +
+      '<rect width="200" height="120" fill="' + c[0] + '" rx="6"/>' +
+      '<rect x="10" y="10" width="180" height="100" fill="none" stroke="' + c[1] + '" stroke-width="1.5" rx="4"/>' +
+      '<text x="100" y="42" fill="' + c[1] + '" font-family="sans-serif" font-size="12" font-weight="700" text-anchor="middle">' + name.replace(/[<>&'"]/g,'') + '</text>' +
+      '<text x="100" y="62" fill="#566259" font-family="sans-serif" font-size="9" text-anchor="middle">' + side.toUpperCase() + ' PACKAGING</text>' +
+      '<rect x="30" y="72" width="140" height="20" fill="' + c[1] + '" opacity="0.12" rx="3"/>' +
+      '<text x="100" y="86" fill="' + c[1] + '" font-family="monospace" font-size="8" text-anchor="middle">■■ ■■■■ ■■ ■■■■■■ ■</text>' +
+      '</svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
+  /* ============================================================
+     ACCEPT / REJECT
+     ============================================================ */
+  function acceptListing(id) {
+    var l = listings.find(function(x){ return x.id === id; });
+    if (!l) return;
+    l.status = 'accepted';
+    l._justArrived = false;
+    if (!l.chat) l.chat = [];
+    l.chat.push({
+      from: 'system',
+      text: 'Donation accepted by ' + ngoData.org.name + '. You can now coordinate pickup via chat.',
+      time: now()
+    });
+    saveListings();
+    renderListings();
+    toast('✓ Donation accepted! Donor has been notified. Start chatting to arrange pickup.');
+    // Auto-open chat
+    openChat(id);
+  }
+
+  function openRejectModal(id) {
+    rejectTargetId = id;
+    selectedRejectReason = '';
+    document.querySelectorAll('.radio-option').forEach(function(opt){
+      opt.classList.remove('selected');
+      opt.querySelector('input').checked = false;
+    });
+    document.getElementById('rejectNoteField').value = '';
+    document.getElementById('rejectModal').classList.add('open');
+  }
+
+  function confirmReject() {
+    if (!selectedRejectReason) {
+      toast('Please select a reason for declining.');
+      return;
+    }
+    var l = listings.find(function(x){ return x.id === rejectTargetId; });
+    if (!l) return;
+    l.status = 'rejected';
+    l._justArrived = false;
+    l.rejectReason = selectedRejectReason;
+    l.rejectNote = document.getElementById('rejectNoteField').value.trim();
+    saveListings();
+    closeRejectModal();
+    renderListings();
+    toast('Donation declined. Reason shared with donor.');
+  }
+
+  function closeRejectModal() {
+    document.getElementById('rejectModal').classList.remove('open');
+    rejectTargetId = null;
+  }
+
+  function markPickedUp(id) {
+    var l = listings.find(function(x){ return x.id === id; });
+    if (!l) return;
+    l.status = 'pickedup';
+    if (l.chat) {
+      l.chat.push({
+        from: 'system',
+        text: '✓ Medicine marked as picked up by the NGO. Donation complete! Thank you.',
+        time: now()
+      });
+    }
+    saveListings();
+    renderListings();
+    toast('✓ Marked as picked up! Thank you for making a difference.');
+  }
+
+  /* ============================================================
+     CHAT
+     ============================================================ */
+  var NGO_QUICK_REPLIES = [
+    'We have accepted your donation. Thank you! 🙏',
+    'Can you please confirm your pickup address?',
+    'We will send our volunteer for pickup tomorrow between 10–11 AM.',
+    'Is the medicine in its original sealed packaging?',
+    'Pickup confirmed for today. Our volunteer will call before arriving.',
+    'Thank you so much for your generous donation!'
+  ];
+
+  var DONOR_AUTO_REPLIES = [
+    'Sure, I will keep it ready. Thank you!',
+    'Yes it is sealed and in original packaging.',
+    'Great! The address is Plot 14, Sector 5, Near Main Market.',
+    'Perfect. I will be home all day.',
+    'Happy to help 😊',
+    'Thank you for reaching out!'
+  ];
+
+  function openChat(id) {
+    var l = listings.find(function(x){ return x.id === id; });
+    if (!l) return;
+    activeChatId = id;
+
+    document.getElementById('chatDonorName').textContent = l.donor;
+    document.getElementById('chatMedName').textContent = l.name + ' · ' + l.distance + ' km · ' + l.city;
+
+    renderChatMessages(l);
+    renderQuickReplies();
+
+    document.getElementById('chatOverlay').classList.add('open');
+    document.getElementById('chatDrawer').classList.add('open');
+
+    // Mark donor messages read
+    setTimeout(function(){
+      var msgs = document.getElementById('chatMessages');
+      if (msgs) msgs.scrollTop = msgs.scrollHeight;
+    }, 80);
+  }
+
+  function renderChatMessages(l) {
+    var container = document.getElementById('chatMessages');
+    if (!container) return;
+    var html = '';
+    (l.chat || []).forEach(function(msg) {
+      if (msg.from === 'system') {
+        html += '<div class="chat-system-msg">' + esc(msg.text) + '</div>';
+      } else {
+        var cls = msg.from === 'ngo' ? 'from-ngo' : 'from-donor';
+        html += '<div class="msg ' + cls + '">' +
+          '<div class="msg-bubble">' + esc(msg.text) + '</div>' +
+          '<div class="msg-time">' + esc(msg.time) + '</div>' +
+          '</div>';
+      }
+    });
+    if (!l.chat || l.chat.length === 0) {
+      html = '<div class="chat-system-msg">Start chatting to arrange the medicine pickup 📦</div>';
+    }
+    container.innerHTML = html;
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function renderQuickReplies() {
+    var container = document.getElementById('quickReplies');
+    if (!container) return;
+    container.innerHTML = NGO_QUICK_REPLIES.map(function(r){
+      return '<button class="quick-reply" data-action="quick-reply" data-text="' + esc(r) + '">' + esc(r.length > 38 ? r.substring(0,38) + '…' : r) + '</button>';
+    }).join('');
+  }
+
+  function sendNgoMessage(text) {
+    if (!activeChatId || !text.trim()) return;
+    var l = listings.find(function(x){ return x.id === activeChatId; });
+    if (!l) return;
+    if (!l.chat) l.chat = [];
+    l.chat.push({ from: 'ngo', text: text.trim(), time: now() });
+    renderChatMessages(l);
+    saveListings();
+    document.getElementById('chatInput').value = '';
+    // Simulate donor auto-reply after 2-4s
+    setTimeout(function(){
+      if (activeChatId !== l.id) return;
+      var reply = DONOR_AUTO_REPLIES[Math.floor(Math.random() * DONOR_AUTO_REPLIES.length)];
+      l.chat.push({ from: 'donor', text: reply, time: now() });
+      renderChatMessages(l);
+      saveListings();
+      updateStats();
+    }, 2000 + Math.random() * 2000);
+  }
+
+  function closeChat() {
+    document.getElementById('chatOverlay').classList.remove('open');
+    document.getElementById('chatDrawer').classList.remove('open');
+    activeChatId = null;
+  }
+
+  function now() {
+    return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  /* ============================================================
+     CALL SIMULATION
+     ============================================================ */
+  function startCall(id) {
+    var l = listings.find(function(x){ return x.id === id; });
+    if (!l) return;
+    var popup = document.getElementById('callPopup');
+    var initials = l.donor.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);
+    document.getElementById('callAvatarLg').textContent = initials;
+    document.getElementById('callNameLg').textContent = l.donor;
+    document.getElementById('callStatusTxt').textContent = 'Calling…';
+    popup.classList.add('open');
+
+    clearTimeout(callTimer);
+    callTimer = setTimeout(function(){
+      document.getElementById('callStatusTxt').textContent = 'Connected — 0:00';
+      var sec = 0;
+      callTimer = setInterval(function(){
+        sec++;
+        var m = Math.floor(sec / 60);
+        var s = sec % 60;
+        var el = document.getElementById('callStatusTxt');
+        if (el) el.textContent = 'Connected — ' + m + ':' + (s < 10 ? '0' : '') + s;
+      }, 1000);
+    }, 1800);
+  }
+
+  function endCall() {
+    clearInterval(callTimer);
+    clearTimeout(callTimer);
+    document.getElementById('callPopup').classList.remove('open');
+    toast('Call ended.');
+  }
+
+  /* ============================================================
+     PROFILE PANEL
+     ============================================================ */
+  function openProfilePanel() {
+    var org = ngoData.org;
+    var body = document.getElementById('profilePanelBody');
+    body.innerHTML = '<div class="profile-section">' +
+      '<h4>Organisation</h4>' +
+      '<div class="profile-row"><span>Name</span><span>' + esc(org.name) + '</span></div>' +
+      '<div class="profile-row"><span>Category</span><span>' + esc(org.category.split('(')[0].trim()) + '</span></div>' +
+      '<div class="profile-row"><span>License No.</span><span>' + esc(org.regNumber) + '</span></div>' +
+      '<div class="profile-row"><span>Status</span><span style="color:var(--green-700);">✓ Admin Verified</span></div>' +
+      '</div>' +
+      '<div class="profile-section">' +
+      '<h4>Facility Location</h4>' +
+      '<div class="profile-row"><span>Address</span><span>' + esc(org.address) + '</span></div>' +
+      '<div class="profile-row"><span>City, State</span><span>' + esc(org.city) + ', ' + esc(org.state) + ' – ' + esc(org.pincode) + '</span></div>' +
+      '<div class="profile-row"><span>Timings</span><span>' + esc(org.timings) + '</span></div>' +
+      '</div>' +
+      '<div class="profile-section">' +
+      '<h4>Contact Person</h4>' +
+      '<div class="profile-row"><span>Name</span><span>' + esc(org.contactName) + '</span></div>' +
+      '<div class="profile-row"><span>Designation</span><span>' + esc(org.designation) + '</span></div>' +
+      '<div class="profile-row"><span>Mobile</span><span>+91 ' + esc(org.contactPhone || ngoData.phone) + '</span></div>' +
+      '<div class="profile-row"><span>Email</span><span>' + esc(ngoData.email) + '</span></div>' +
+      '</div>' +
+      '<div class="profile-section">' +
+      '<h4>Account</h4>' +
+      '<div class="profile-row"><span>Application ID</span><span><code>' + esc(org.appId) + '</code></span></div>' +
+      '</div>' +
+      '<hr class="divider">' +
+      '<a href="ngo-signup.html" class="btn btn-ghost btn-block" style="margin-bottom:10px;">✏️ Edit Organisation Profile</a>' +
+      '<button class="btn btn-danger btn-block" id="logoutNgoBtn">Sign Out</button>';
+
+    document.getElementById('panelOverlay').classList.add('open');
+    document.getElementById('ngoProfilePanel').classList.add('open');
+
+    document.getElementById('logoutNgoBtn').addEventListener('click', function(){
+      if (confirm('Sign out of MedDonate NGO portal?')) {
+        try { localStorage.removeItem('meddonate_ngo'); localStorage.removeItem('meddonate_ngo_listings'); } catch(e) {}
+        window.location.href = 'index.html';
+      }
+    });
+  }
+
+  function closeProfilePanel() {
+    document.getElementById('panelOverlay').classList.remove('open');
+    document.getElementById('ngoProfilePanel').classList.remove('open');
+  }
+
+  /* ============================================================
+     LIVE SIMULATION (real-time new listing trickle)
+     ============================================================ */
+  var LIVE_ADDITIONS = [
+    {
+      id: 'live1', name: 'Azithromycin 250mg', category: 'Antibiotic',
+      qty: '6 tablets', expiry: futureDateStr(6),
+      donor: 'Suresh Kumar', phone: '9811777777', city: 'New Delhi',
+      distance: 7.3, frontImg: '', backImg: '',
+      notes: 'Prescribed but not needed after tests came back clear.',
+      listedAt: 'Just now', status: 'new', chat: []
+    },
+    {
+      id: 'live2', name: 'Ibuprofen 400mg', category: 'Analgesic',
+      qty: '10 tablets', expiry: futureDateStr(18),
+      donor: 'Meena Patel', phone: '9822888888', city: 'New Delhi',
+      distance: 5.1, frontImg: '', backImg: '',
+      notes: 'Left over from an old prescription.',
+      listedAt: 'Just now', status: 'new', chat: []
+    },
+    {
+      id: 'live3', name: 'Vitamin D3 60K IU', category: 'Supplement',
+      qty: '4 sachets', expiry: futureDateStr(20),
+      donor: 'Deepika Singh', phone: '9833999999', city: 'New Delhi',
+      distance: 3.8, frontImg: '', backImg: '',
+      notes: 'Doctor switched to daily dose, sachets surplus.',
+      listedAt: 'Just now', status: 'new', chat: []
+    }
+  ];
+  var liveIdx = 0;
+
+  function startLiveSimulation() {
+    var liveStatus = document.getElementById('liveStatus');
+    clearInterval(liveInterval);
+    liveInterval = setInterval(function(){
+      var elapsed = Math.round((Date.now() - lastLiveCheck) / 1000);
+      if (liveStatus) {
+        liveStatus.textContent = 'Live — last checked ' + elapsed + 's ago';
+      }
+      // Every 25s, trickle in a new demo listing
+      if (elapsed > 0 && elapsed % 25 === 0 && liveIdx < LIVE_ADDITIONS.length) {
+        var newL = Object.assign({}, LIVE_ADDITIONS[liveIdx], { _justArrived: true });
+        newL.frontImg = getDemoMedSvg(newL.name, 'front');
+        newL.backImg = getDemoMedSvg(newL.name, 'back');
+        var already = listings.find(function(l){ return l.id === newL.id; });
+        if (!already) {
+          listings.push(newL);
+          saveListings();
+          renderListings();
+          toast('🔔 New donation listing from ' + newL.donor + ' — ' + newL.name);
+          lastLiveCheck = Date.now();
+          liveIdx++;
+        }
+      }
+    }, 1000);
+  }
+
+  /* ============================================================
+     EVENT DELEGATION
+     ============================================================ */
+  document.addEventListener('click', function(e) {
+    // Range pills
+    var rangePill = e.target.closest('.range-pill');
+    if (rangePill) {
+      document.querySelectorAll('.range-pill').forEach(function(p){ p.classList.remove('active'); });
+      rangePill.classList.add('active');
+      currentRange = parseInt(rangePill.getAttribute('data-range'), 10);
+      renderListings();
+      toast('Showing donations within ' + (currentRange === 50 ? 'entire city' : currentRange + ' km'));
+      return;
+    }
+
+    // Filter buttons
+    var filterBtn = e.target.closest('.filter-btn');
+    if (filterBtn) {
+      document.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
+      filterBtn.classList.add('active');
+      currentFilter = filterBtn.getAttribute('data-filter');
+      renderListings();
+      return;
+    }
+
+    // Action buttons
+    var actionEl = e.target.closest('[data-action]');
+    if (!actionEl) return;
+    var action = actionEl.getAttribute('data-action');
+    var id = actionEl.getAttribute('data-id');
+
+    if (action === 'accept') { acceptListing(id); return; }
+    if (action === 'reject') { openRejectModal(id); return; }
+    if (action === 'open-chat') { openChat(id); return; }
+    if (action === 'call-donor') { startCall(id); return; }
+    if (action === 'mark-pickedup') {
+      if (confirm('Mark this medicine as picked up? This completes the donation.')) {
+        markPickedUp(id);
+      }
+      return;
+    }
+    if (action === 'quick-reply') {
+      var text = actionEl.getAttribute('data-text');
+      sendNgoMessage(text);
+      return;
+    }
+  });
+
+  // Reject modal radio options
+  document.getElementById('rejectReasonGroup').addEventListener('click', function(e) {
+    var opt = e.target.closest('.radio-option');
+    if (!opt) return;
+    document.querySelectorAll('.radio-option').forEach(function(o){ o.classList.remove('selected'); o.querySelector('input').checked = false; });
+    opt.classList.add('selected');
+    opt.querySelector('input').checked = true;
+    selectedRejectReason = opt.getAttribute('data-val');
+  });
+
+  document.getElementById('confirmRejectBtn').addEventListener('click', confirmReject);
+  document.getElementById('cancelRejectBtn').addEventListener('click', closeRejectModal);
+  document.getElementById('closeRejectModal').addEventListener('click', closeRejectModal);
+
+  // Close modal on overlay click
+  document.getElementById('rejectModal').addEventListener('click', function(e){
+    if (e.target === this) closeRejectModal();
+  });
+
+  // Chat
+  document.getElementById('chatOverlay').addEventListener('click', closeChat);
+  document.getElementById('closeChatDrawer').addEventListener('click', closeChat);
+
+  document.getElementById('sendChatBtn').addEventListener('click', function(){
+    sendNgoMessage(document.getElementById('chatInput').value);
+  });
+
+  document.getElementById('chatInput').addEventListener('keydown', function(e){
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendNgoMessage(this.value);
+    }
+  });
+
+  document.getElementById('callDonorBtn').addEventListener('click', function(){
+    if (activeChatId) startCall(activeChatId);
+  });
+
+  // Call popup
+  document.getElementById('callEndBtn').addEventListener('click', endCall);
+  document.getElementById('callMuteBtn').addEventListener('click', function(){
+    var btn = document.getElementById('callMuteBtn');
+    btn.textContent = btn.textContent === '🎤' ? '🔇' : '🎤';
+    toast(btn.textContent === '🔇' ? 'Muted' : 'Unmuted');
+  });
+
+  // Profile panel
+  document.getElementById('ngoProfileChip').addEventListener('click', openProfilePanel);
+  document.getElementById('panelOverlay').addEventListener('click', closeProfilePanel);
+  document.getElementById('closePanelBtn').addEventListener('click', closeProfilePanel);
+
+  // Demo button
+  document.getElementById('simulateDemoBtn').addEventListener('click', simulateDemoListings);
+
+  // Chat list button (open latest accepted chat)
+  document.getElementById('openChatListBtn').addEventListener('click', function(){
+    var accepted = listings.filter(function(l){ return l.status === 'accepted'; });
+    if (accepted.length === 0) {
+      toast('No active chats yet. Accept a donation to start chatting with a donor.');
+      return;
+    }
+    // Open most recent with unread, else first accepted
+    var withUnread = accepted.filter(function(l){ return l.chat && l.chat.length > 0 && l.chat[l.chat.length-1].from === 'donor'; });
+    openChat((withUnread[0] || accepted[0]).id);
+  });
+
+  /* ============================================================
+     BOOT
+     ============================================================ */
+  initHeader();
+  renderListings();
+  startLiveSimulation();
+
+  // Auto-load demo listings on first visit
+  try {
+    if (!localStorage.getItem('meddonate_ngo_listings')) {
+      setTimeout(simulateDemoListings, 400);
+    }
+  } catch(e) {}
+
+})();
+</script>
+</body>
+</html>

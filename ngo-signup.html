@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedDonate — NGO &amp; Clinic Verification &amp; Registration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,680&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Firebase SDK compatibility for real SMS OTP if configured -->
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-auth-compat.js"></script>
+<link rel="stylesheet" href="ngo-signup.css">
+</head>
+<body>
+<div id="shell">
+  <header class="top">
+    <div class="brand">
+      <span class="mark">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+          <path d="M7 17L17 7M9.5 4.5L4.5 9.5C2.7 11.3 2.7 14.2 4.5 16C6.3 17.8 9.2 17.8 11 16L16 11C17.8 9.2 17.8 6.3 16 4.5C14.2 2.7 11.3 2.7 9.5 4.5Z" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </span>
+      MedDonate
+    </div>
+    <a href="index.html" class="back-link">&larr; Home</a>
+  </header>
+  <main id="app"></main>
+</div>
+
+<div id="toast"></div>
+<div id="recaptcha-container"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  var COUNTRY_CODE = "+91";
+
+  // State object
+  var state = {
+    step: 1, // 1: verify, 2: org details, 3: admin verification status
+    phone: '',
+    phoneOtpSent: false,
+    phoneVerified: false,
+    demoPhoneOtp: '123456',
+    email: '',
+    emailSent: false,
+    emailVerified: false,
+    demoEmailOtp: '123456',
+    org: {
+      category: 'Registered Non-Governmental Organisation (NGO)',
+      name: '',
+      regNumber: '',
+      address: '',
+      city: '',
+      state: '',
+      pincode: '',
+      timings: 'Mon-Sat: 09:00 AM - 07:00 PM',
+      contactName: '',
+      designation: '',
+      contactPhone: '',
+      premisesPhoto: '',
+      premisesPhotoName: '',
+      licenseDoc: '',
+      licenseDocName: '',
+      appId: '',
+      submittedAt: '',
+      adminStatus: 'under_review' // 'under_review' | 'approved'
+    }
+  };
+
+  // Check saved state from localStorage
+  try {
+    var saved = localStorage.getItem('meddonate_ngo');
+    if (saved) {
+      var parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object') {
+        state.phone = parsed.phone || '';
+        state.phoneVerified = !!parsed.phoneVerified;
+        state.email = parsed.email || '';
+        state.emailVerified = !!parsed.emailVerified;
+        if (parsed.org) {
+          state.org = Object.assign(state.org, parsed.org);
+        }
+        if (state.org.appId && state.org.name) {
+          state.step = 3; // return directly to status tracking
+        }
+      }
+    }
+  } catch(e) {
+    console.error('Error loading saved NGO state', e);
+  }
+
+  function saveState(){
+    try {
+      localStorage.setItem('meddonate_ngo', JSON.stringify({
+        phone: state.phone,
+        phoneVerified: state.phoneVerified,
+        email: state.email,
+        emailVerified: state.emailVerified,
+        org: state.org
+      }));
+    } catch(e){}
+  }
+
+  function toast(msg){
+    var t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function stepTrack(step, total){
+    var dots = '';
+    for (var i = 1; i <= total; i++){
+      var cls = i === step ? 'active' : (i < step ? 'done' : '');
+      dots += '<span class="step-dot ' + cls + '"></span>';
+    }
+    return '<div class="step-track">' + dots + '</div>';
+  }
+
+  function pageHead(eyebrow, title){
+    return '<div class="page-head"><p class="eyebrow">' + eyebrow + '</p><h1>' + title + '</h1></div>';
+  }
+
+  function iconCheck(){
+    return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
+  // Sample SVG generator for quick testing
+  function getSamplePremisesSvg(){
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="260" viewBox="0 0 400 260">' +
+      '<rect width="400" height="260" fill="#1F5C4E"/>' +
+      '<rect x="40" y="70" width="320" height="150" fill="#FBFCF9" rx="8"/>' +
+      '<rect x="70" y="100" width="60" height="50" fill="#DCEAE3" rx="4"/>' +
+      '<rect x="270" y="100" width="60" height="50" fill="#DCEAE3" rx="4"/>' +
+      '<rect x="170" y="130" width="60" height="90" fill="#16382F" rx="4"/>' +
+      '<circle cx="200" cy="50" r="16" fill="#E3A23F"/>' +
+      '<path d="M194 50h12M200 44v12" stroke="#16382F" stroke-width="3" stroke-linecap="round"/>' +
+      '<text x="200" y="245" fill="#E7ECE2" font-family="sans-serif" font-size="13" font-weight="600" text-anchor="middle">Aarogya Seva Health Clinic — Facility Front Entrance</text>' +
+      '</svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
+  function getSampleLicenseSvg(){
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="260" viewBox="0 0 400 260">' +
+      '<rect width="400" height="260" fill="#FBFCF9" stroke="#1F5C4E" stroke-width="4"/>' +
+      '<rect x="20" y="20" width="360" height="220" fill="none" stroke="#D3DBCC" stroke-width="1.5"/>' +
+      '<circle cx="200" cy="58" r="22" fill="#FBEBD2" stroke="#E3A23F" stroke-width="2"/>' +
+      '<text x="200" y="64" fill="#C8862A" font-family="serif" font-size="20" font-weight="bold" text-anchor="middle">&#10003;</text>' +
+      '<text x="200" y="105" fill="#16382F" font-family="serif" font-size="15" font-weight="bold" text-anchor="middle">CERTIFICATE OF REGISTRATION</text>' +
+      '<text x="200" y="125" fill="#566259" font-family="sans-serif" font-size="11" text-anchor="middle">Govt. Registered Healthcare Non-Profit Society</text>' +
+      '<line x1="60" y1="140" x2="340" y2="140" stroke="#E7ECE2" stroke-width="2"/>' +
+      '<text x="200" y="165" fill="#1B231E" font-family="sans-serif" font-size="13" font-weight="600" text-anchor="middle">Reg No: DL/NGO/2021/847291-MED</text>' +
+      '<text x="200" y="190" fill="#566259" font-family="sans-serif" font-size="11" text-anchor="middle">Issued under Indian Societies Registration Act XXI of 1860</text>' +
+      '<text x="200" y="222" fill="#1F5C4E" font-family="sans-serif" font-size="10" font-weight="600" text-anchor="middle">&#9679; VALID &amp; VERIFIED IN DARPAN PORTAL &#9679;</text>' +
+      '</svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+
+  /* ============================================================
+     STEP 1: PHONE & EMAIL VERIFICATION
+     ============================================================ */
+  function renderStep1(){
+    var bothVerified = state.phoneVerified && state.emailVerified;
+
+    return '' +
+    '<div class="demo-bar">' +
+      '<div class="demo-title">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>' +
+        '<span>Demo Fast-Track</span>' +
+      '</div>' +
+      '<div>' +
+        '<button class="btn btn-gold btn-sm" data-action="quick-verify-demo">⚡ Quick Auto-Verify (Phone + Email)</button>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="notice-strip">' +
+      '<span>🛡️</span>' +
+      '<div><strong>Healthcare Integrity:</strong> To ensure patient safety, MedDonate requires two-point verification (official mobile number &amp; institutional email) before reviewing organisation documents.</div>' +
+    '</div>' +
+
+    stepTrack(1, 3) +
+    pageHead('NGO &amp; Clinic Onboarding &middot; Step 1 of 3', 'Verify official phone &amp; email') +
+
+    '<div class="card stack">' +
+      // Phone verification block
+      '<div>' +
+        '<label for="ngoPhone">Official Mobile Number</label>' +
+        '<div class="verify-row">' +
+          '<div style="display:flex; align-items:center; gap:6px; padding:11px 12px; border:1px solid var(--line); border-radius:var(--radius-input); background:var(--surface-2); font-weight:600; color:var(--ink-soft);">' + COUNTRY_CODE + '</div>' +
+          '<div class="field">' +
+            '<input type="tel" id="ngoPhone" inputmode="numeric" maxlength="10" placeholder="9811234567" value="' + esc(state.phone) + '" ' + (state.phoneVerified ? 'disabled' : '') + '>' +
+          '</div>' +
+          (state.phoneVerified
+            ? '<span class="badge badge-verified">' + iconCheck() + ' Verified</span>'
+            : '<button class="btn btn-ghost" data-action="send-phone-otp">' + (state.phoneOtpSent ? 'Resend' : 'Send OTP') + '</button>'
+          ) +
+        '</div>' +
+        (!state.phoneVerified ? '<p class="hint">10-digit mobile number for dispatch alerts &amp; donor coordination.</p>' : '') +
+        (!state.phoneVerified && state.phoneOtpSent ?
+          '<div class="field" style="margin-top:14px; background:var(--surface-2); padding:12px; border-radius:var(--radius-input); border:1px solid var(--line);">' +
+            '<label for="phoneOtpInput">Enter 6-digit Mobile OTP <span style="font-weight:600; color:var(--green-700);">(Demo OTP: ' + state.demoPhoneOtp + ')</span></label>' +
+            '<div class="verify-row">' +
+              '<div class="field" style="margin-bottom:0;">' +
+                '<input type="text" id="phoneOtpInput" inputmode="numeric" maxlength="6" placeholder="Enter ' + state.demoPhoneOtp + '">' +
+              '</div>' +
+              '<button class="btn btn-primary" data-action="verify-phone-otp">Verify OTP</button>' +
+            '</div>' +
+            '<p class="hint">Demo mode: Enter <strong>' + state.demoPhoneOtp + '</strong> or <strong>123456</strong>.</p>' +
+          '</div>'
+        : '') +
+      '</div>' +
+
+      '<hr class="section-divider">' +
+
+      // Email verification block
+      '<div>' +
+        '<label for="ngoEmail">Official / Institutional Email</label>' +
+        '<div class="verify-row">' +
+          '<div class="field">' +
+            '<input type="email" id="ngoEmail" placeholder="contact@aarogyaseva.org" value="' + esc(state.email) + '" ' + (state.emailVerified ? 'disabled' : '') + '>' +
+          '</div>' +
+          (state.emailVerified
+            ? '<span class="badge badge-verified">' + iconCheck() + ' Verified</span>'
+            : '<button class="btn btn-ghost" data-action="send-email-otp">' + (state.emailSent ? 'Resend' : 'Send OTP') + '</button>'
+          ) +
+        '</div>' +
+        (!state.emailVerified ? '<p class="hint">Official domain or registered contact email for verification notices.</p>' : '') +
+        (!state.emailVerified && state.emailSent ?
+          '<div class="field" style="margin-top:14px; background:var(--surface-2); padding:12px; border-radius:var(--radius-input); border:1px solid var(--line);">' +
+            '<label for="emailOtpInput">Enter 6-digit Email OTP <span style="font-weight:600; color:var(--green-700);">(Demo OTP: ' + state.demoEmailOtp + ')</span></label>' +
+            '<div class="verify-row">' +
+              '<div class="field" style="margin-bottom:0;">' +
+                '<input type="text" id="emailOtpInput" inputmode="numeric" maxlength="6" placeholder="Enter ' + state.demoEmailOtp + '">' +
+              '</div>' +
+              '<button class="btn btn-primary" data-action="verify-email-otp">Verify OTP</button>' +
+            '</div>' +
+            '<p class="hint">Demo mode: Enter <strong>' + state.demoEmailOtp + '</strong> or <strong>123456</strong>.</p>' +
+          '</div>'
+        : '') +
+      '</div>' +
+
+      '<div style="margin-top:8px;">' +
+        '<button class="btn btn-gold btn-block" data-action="goto-step-2" ' + (bothVerified ? '' : 'disabled') + '>' +
+          (bothVerified ? 'Continue to Organisation Details &rarr;' : 'Verify both phone &amp; email to proceed') +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  /* ============================================================
+     STEP 2: ORGANISATION DETAILS & VERIFICATION PROOFS
+     ============================================================ */
+  function renderStep2(){
+    var o = state.org;
+
+    return '' +
+    '<div class="demo-bar">' +
+      '<div class="demo-title">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>' +
+        '<span>Quick Testing</span>' +
+      '</div>' +
+      '<div>' +
+        '<button type="button" class="btn btn-gold btn-sm" data-action="fill-sample-ngo">⚡ Fill Sample NGO Details &amp; Proofs</button>' +
+      '</div>' +
+    '</div>' +
+
+    stepTrack(2, 3) +
+    pageHead('NGO &amp; Clinic Onboarding &middot; Step 2 of 3', 'Submit organisation details &amp; credentials') +
+
+    '<form class="card stack" data-form="org-details">' +
+      // Section 1: Org Identification
+      '<div>' +
+        '<div class="form-subtitle">1. Organisation Identity</div>' +
+        '<div class="field">' +
+          '<label for="orgCategory">Category of Healthcare Entity *</label>' +
+          '<select id="orgCategory" required>' +
+            '<option value="Registered Non-Governmental Organisation (NGO)"' + (o.category.indexOf('NGO')!==-1?' selected':'') + '>Registered Non-Governmental Organisation (NGO)</option>' +
+            '<option value="Charitable Hospital / Dispensary"' + (o.category.indexOf('Charitable')!==-1?' selected':'') + '>Charitable Hospital / Dispensary</option>' +
+            '<option value="Community Health Centre (CHC / PHC)"' + (o.category.indexOf('CHC')!==-1?' selected':'') + '>Community Health Centre (CHC / PHC)</option>' +
+            '<option value="Medical Welfare Society / Trust"' + (o.category.indexOf('Trust')!==-1?' selected':'') + '>Medical Welfare Society / Trust</option>' +
+            '<option value="Licensed Non-Profit Free Pharmacy"' + (o.category.indexOf('Pharmacy')!==-1?' selected':'') + '>Licensed Non-Profit Free Pharmacy</option>' +
+            '<option value="Disaster Healthcare Mission"' + (o.category.indexOf('Disaster')!==-1?' selected':'') + '>Disaster Healthcare Mission</option>' +
+          '</select>' +
+          '<p class="hint">Helps donor algorithms determine medicine suitability &amp; refrigeration capacity.</p>' +
+        '</div>' +
+
+        '<div class="field">' +
+          '<label for="orgName">Organisation / Clinic Full Legal Name *</label>' +
+          '<input type="text" id="orgName" placeholder="e.g. Aarogya Seva Medical & Relief Trust" required value="' + esc(o.name) + '">' +
+          '<p class="hint">Must match the registered name on your license or DARPAN profile.</p>' +
+        '</div>' +
+
+        '<div class="field">' +
+          '<label for="regNumber">Registration / License Number *</label>' +
+          '<input type="text" id="regNumber" placeholder="e.g. DARPAN ID, 12A / 80G No., or Clinical Establishment Reg." required value="' + esc(o.regNumber) + '">' +
+          '<p class="hint">Statutory government registration or state healthcare license code.</p>' +
+        '</div>' +
+      '</div>' +
+
+      '<hr class="section-divider">' +
+
+      // Section 2: Physical Facility & Address
+      '<div>' +
+        '<div class="form-subtitle">2. Facility Address &amp; Location</div>' +
+        '<div class="field">' +
+          '<label for="orgAddress">Complete Facility / Clinic Street Address *</label>' +
+          '<input type="text" id="orgAddress" placeholder="Building no., Street name, Landmark, Sector/Area" required value="' + esc(o.address) + '">' +
+        '</div>' +
+
+        '<div class="two-col">' +
+          '<div class="field">' +
+            '<label for="orgCity">City *</label>' +
+            '<input type="text" id="orgCity" placeholder="e.g. New Delhi" required value="' + esc(o.city) + '">' +
+          '</div>' +
+          '<div class="field">' +
+            '<label for="orgState">State / Union Territory *</label>' +
+            '<input type="text" id="orgState" placeholder="e.g. Delhi" required value="' + esc(o.state) + '">' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="two-col">' +
+          '<div class="field">' +
+            '<label for="orgPincode">Pincode *</label>' +
+            '<input type="text" id="orgPincode" inputmode="numeric" maxlength="6" placeholder="e.g. 110016" required value="' + esc(o.pincode) + '">' +
+          '</div>' +
+          '<div class="field">' +
+            '<label for="orgTimings">Operating / Intake Hours</label>' +
+            '<input type="text" id="orgTimings" placeholder="e.g. Mon-Sat: 09:00 AM - 07:00 PM" value="' + esc(o.timings) + '">' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<hr class="section-divider">' +
+
+      // Section 3: Document & Premises Proofs
+      '<div>' +
+        '<div class="form-subtitle">3. Verification Proofs (Premises Photo &amp; License)</div>' +
+        '<p class="hint" style="margin-top:-6px; margin-bottom:12px;">Visual verification ensures medications are stored in clean, supervised medical premises.</p>' +
+
+        '<div class="upload-grid">' +
+          // Premises Photo Box
+          '<div>' +
+            '<label>Premises Photo (Clinic Front / Facility) *</label>' +
+            '<input type="file" id="premisesFileInput" accept="image/*" capture="environment" style="display:none;">' +
+            '<div class="upload-box ' + (o.premisesPhoto ? 'has-file' : '') + '" id="premisesDropzone" data-action="pick-premises-photo">' +
+              (o.premisesPhoto
+                ? '<div class="upload-preview">' +
+                    '<img src="' + o.premisesPhoto + '" alt="Premises Preview">' +
+                    '<button type="button" class="remove-upload-btn" data-action="remove-premises-photo" title="Remove photo">&times;</button>' +
+                  '</div>'
+                : '<div class="upload-placeholder">' +
+                    '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' +
+                    '<strong style="font-size:0.85rem; color:var(--green-700);">Upload Premises Photo</strong>' +
+                    '<span style="font-size:0.75rem; color:var(--ink-soft);">Camera or image (JPG/PNG)</span>' +
+                  '</div>'
+              ) +
+            '</div>' +
+            '<p class="hint">' + (o.premisesPhotoName ? 'Uploaded: ' + esc(o.premisesPhotoName) : 'Facility front signboard or pharmacy storage room.') + '</p>' +
+          '</div>' +
+
+          // License Document Box
+          '<div>' +
+            '<label>License / Registration Document *</label>' +
+            '<input type="file" id="licenseFileInput" accept="image/*,.pdf" style="display:none;">' +
+            '<div class="upload-box ' + (o.licenseDoc ? 'has-file' : '') + '" id="licenseDropzone" data-action="pick-license-doc">' +
+              (o.licenseDoc
+                ? (o.licenseDoc.indexOf('data:image') === 0
+                    ? '<div class="upload-preview">' +
+                        '<img src="' + o.licenseDoc + '" alt="License Document Preview">' +
+                        '<button type="button" class="remove-upload-btn" data-action="remove-license-doc" title="Remove document">&times;</button>' +
+                      '</div>'
+                    : '<div class="doc-preview-badge">' +
+                        '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>' +
+                        '<strong style="font-size:0.82rem;">License Attached</strong>' +
+                        '<span style="font-size:0.72rem; word-break:break-all;">' + esc(o.licenseDocName || 'Document verified') + '</span>' +
+                        '<button type="button" class="remove-upload-btn" data-action="remove-license-doc" title="Remove document">&times;</button>' +
+                      '</div>'
+                  )
+                : '<div class="upload-placeholder">' +
+                    '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' +
+                    '<strong style="font-size:0.85rem; color:var(--green-700);">Upload License Document</strong>' +
+                    '<span style="font-size:0.75rem; color:var(--ink-soft);">Registration certificate (Image/PDF)</span>' +
+                  '</div>'
+              ) +
+            '</div>' +
+            '<p class="hint">' + (o.licenseDocName ? 'Uploaded: ' + esc(o.licenseDocName) : 'NGO Darpan, Trust Deed, 12A, 80G or Clinical ID.') + '</p>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<hr class="section-divider">' +
+
+      // Section 4: Authorized Contact Person
+      '<div>' +
+        '<div class="form-subtitle">4. Authorized Contact Person</div>' +
+        '<div class="two-col">' +
+          '<div class="field">' +
+            '<label for="contactName">Full Name *</label>' +
+            '<input type="text" id="contactName" placeholder="e.g. Dr. Sunita Sharma" required value="' + esc(o.contactName) + '">' +
+          '</div>' +
+          '<div class="field">' +
+            '<label for="designation">Designation / Role *</label>' +
+            '<input type="text" id="designation" placeholder="e.g. Medical Director / Managing Trustee" required value="' + esc(o.designation) + '">' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="field">' +
+          '<label for="contactPhone">Direct Official Mobile Number</label>' +
+          '<input type="tel" id="contactPhone" placeholder="10-digit number" value="' + esc(o.contactPhone || state.phone) + '">' +
+          '<p class="hint">Will be shared with verified donors only after a donation claim is approved.</p>' +
+        '</div>' +
+      '</div>' +
+
+      // Form actions
+      '<div style="display:flex; gap:12px; margin-top:12px; flex-wrap:wrap;">' +
+        '<button type="button" class="btn btn-ghost" data-action="goto-step-1" style="flex:1;">&larr; Back to Step 1</button>' +
+        '<button type="submit" class="btn btn-primary" style="flex:2;">Submit for Admin Verification &rarr;</button>' +
+      '</div>' +
+    '</form>';
+  }
+
+  /* ============================================================
+     STEP 3: APPLICATION UNDER ADMIN VERIFICATION
+     ============================================================ */
+  function renderStep3(){
+    var o = state.org;
+    var isApproved = o.adminStatus === 'approved';
+
+    return '' +
+    stepTrack(3, 3) +
+    pageHead('Application Status &middot; Step 3 of 3', isApproved ? 'Organisation verified &amp; approved' : 'Application under admin verification') +
+
+    '<div class="card review-card">' +
+      '<div class="review-icon-circle" style="' + (isApproved ? 'background:var(--green-100); color:var(--green-700);' : '') + '">' +
+        (isApproved
+          ? '<svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="2"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+          : '<svg width="34" height="34" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+        ) +
+      '</div>' +
+
+      '<h2 style="font-size:1.45rem; margin-bottom:6px;">' +
+        (isApproved ? esc(o.name) + ' is Verified!' : 'Submitted for Admin Verification') +
+      '</h2>' +
+
+      '<p style="max-width:540px; margin:0 auto 16px;">' +
+        (isApproved
+          ? 'Congratulations! Your healthcare credentials and premises have been vetted and verified by the MedDonate Trust Safety Team. Your organisation can now claim unexpired medicines.'
+          : 'Thank you for submitting your healthcare facility details. Your application has been assigned to our Verification Officers to cross-reference registered NGO and clinical databases.') +
+      '</p>' +
+
+      '<div style="display:inline-flex; align-items:center; gap:8px; margin-bottom:18px;">' +
+        (isApproved
+          ? '<span class="badge badge-approved" style="font-size:0.85rem; padding:6px 14px;">&#10003; MedDonate Verified Partner</span>'
+          : '<span class="badge badge-review" style="font-size:0.85rem; padding:6px 14px;">&#9203; In Admin Verification Queue (Est. 12&ndash;24 hrs)</span>'
+        ) +
+      '</div>' +
+
+      // Meta detail summary
+      '<div class="review-meta-box">' +
+        '<div class="review-meta-row">' +
+          '<span class="review-meta-label">Application Tracking ID</span>' +
+          '<span class="review-meta-val">' +
+            '<code>' + esc(o.appId || 'MED-NGO-2026-8942') + '</code>' +
+            '<button type="button" class="copy-btn" data-action="copy-app-id">Copy</button>' +
+          '</span>' +
+        '</div>' +
+        '<div class="review-meta-row">' +
+          '<span class="review-meta-label">Organisation / Clinic</span>' +
+          '<span class="review-meta-val">' + esc(o.name) + '</span>' +
+        '</div>' +
+        '<div class="review-meta-row">' +
+          '<span class="review-meta-label">Entity Category</span>' +
+          '<span class="review-meta-val">' + esc(o.category) + '</span>' +
+        '</div>' +
+        '<div class="review-meta-row">' +
+          '<span class="review-meta-label">Registration / License</span>' +
+          '<span class="review-meta-val">' + esc(o.regNumber) + '</span>' +
+        '</div>' +
+        '<div class="review-meta-row">' +
+          '<span class="review-meta-label">Authorized Contact Person</span>' +
+          '<span class="review-meta-val">' + esc(o.contactName) + ' (' + esc(o.designation) + ')</span>' +
+        '</div>' +
+        '<div class="review-meta-row">' +
+          '<span class="review-meta-label">Verified Contact Details</span>' +
+          '<span class="review-meta-val">' + COUNTRY_CODE + ' ' + esc(state.phone) + ' &bull; ' + esc(state.email) + '</span>' +
+        '</div>' +
+        '<div class="review-meta-row">' +
+          '<span class="review-meta-label">Facility Location</span>' +
+          '<span class="review-meta-val">' + esc(o.address) + ', ' + esc(o.city) + ', ' + esc(o.state) + ' - ' + esc(o.pincode) + '</span>' +
+        '</div>' +
+        '<div class="review-meta-row">' +
+          '<span class="review-meta-label">Operating Intake Hours</span>' +
+          '<span class="review-meta-val">' + esc(o.timings || 'Mon-Sat: 09:00 AM - 07:00 PM') + '</span>' +
+        '</div>' +
+        '<div class="review-meta-row" style="align-items:flex-start;">' +
+          '<span class="review-meta-label">Attached Proofs</span>' +
+          '<div class="review-meta-val" style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">' +
+            '<span style="font-size:0.8rem; color:var(--green-700);">&#10003; Premises Photo Attached</span>' +
+            (o.premisesPhoto ? '<img src="' + o.premisesPhoto + '" alt="Premises" style="width:72px; height:45px; object-fit:cover; border-radius:4px; border:1px solid var(--line);">' : '') +
+            '<span style="font-size:0.8rem; color:var(--green-700);">&#10003; License Certificate Attached</span>' +
+            (o.licenseDoc && o.licenseDoc.indexOf('data:image') === 0 ? '<img src="' + o.licenseDoc + '" alt="License" style="width:72px; height:45px; object-fit:cover; border-radius:4px; border:1px solid var(--line);">' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="review-meta-row">' +
+          '<span class="review-meta-label">Submitted On</span>' +
+          '<span class="review-meta-val">' + esc(o.submittedAt || new Date().toLocaleString()) + '</span>' +
+        '</div>' +
+      '</div>' +
+
+      // Verification Progress Timeline
+      '<div class="steps-timeline">' +
+        '<div class="timeline-item">' +
+          '<div class="timeline-dot done">&#10003;</div>' +
+          '<div class="timeline-content">' +
+            '<h4>Stage 1: Identity &amp; Contact Verification</h4>' +
+            '<p>Mobile number and official email verified via two-point OTP authentication.</p>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="timeline-item">' +
+          '<div class="timeline-dot ' + (isApproved ? 'done' : 'active') + '">' +
+            (isApproved ? '&#10003;' : '2') +
+          '</div>' +
+          '<div class="timeline-content">' +
+            '<h4>Stage 2: Document &amp; Premises Inspection ' + (isApproved ? '(Passed)' : '(Current)') + '</h4>' +
+            '<p>' + (isApproved
+              ? 'Govt. Registration and physical storage premises approved by Verification Officer.'
+              : 'Our verification team is validating your registration number against the NGO Darpan and Clinical Registries.') +
+            '</p>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="timeline-item">' +
+          '<div class="timeline-dot ' + (isApproved ? 'done' : 'pending') + '">' +
+            (isApproved ? '&#10003;' : '3') +
+          '</div>' +
+          '<div class="timeline-content">' +
+            '<h4>Stage 3: Verified Partner Activation ' + (isApproved ? '(Active)' : '(Pending)') + '</h4>' +
+            '<p>' + (isApproved
+              ? 'Medicine claim rights and donor direct-chat permissions granted.'
+              : 'Once verified, your account can review, chat, and claim nearby donor medicines.') +
+            '</p>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      // Demo Admin Approval Toggle
+      '<div class="demo-bar" style="margin-top:20px; justify-content:center; gap:14px;">' +
+        '<span>💡 Reviewer Interactive Test:</span>' +
+        (isApproved
+          ? '<button type="button" class="btn btn-ghost btn-sm" data-action="toggle-admin-approval">Reset to In-Review Queue</button>'
+          : '<button type="button" class="btn btn-gold btn-sm" data-action="toggle-admin-approval">⚡ Simulate Admin Approval Now</button>'
+        ) +
+      '</div>' +
+
+      // Bottom Actions
+      '<div style="display:flex; justify-content:center; gap:12px; margin-top:22px; flex-wrap:wrap;">' +
+        (isApproved
+          ? '<a href="ngo-dashboard.html" class="btn btn-primary">Go to NGO Dashboard &rarr;</a>'
+          : '<a href="index.html" class="btn btn-primary">&larr; Return to Home</a>'
+        ) +
+        (isApproved
+          ? '<a href="index.html" class="btn btn-ghost">&larr; Home</a>'
+          : '<a href="ngo-dashboard.html" class="btn btn-gold">Preview Dashboard &rarr;</a>'
+        ) +
+        '<button type="button" class="btn btn-ghost" data-action="edit-details">Edit / Resubmit Details</button>' +
+        '<button type="button" class="btn btn-ghost" data-action="reset-registration" style="color:var(--red-600);">New Application</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  /* ============================================================
+     RENDER CONTROLLER
+     ============================================================ */
+  function render(){
+    var app = document.getElementById('app');
+    if (!app) return;
+
+    if (state.step === 1) {
+      app.innerHTML = renderStep1();
+    } else if (state.step === 2) {
+      app.innerHTML = renderStep2();
+    } else {
+      app.innerHTML = renderStep3();
+    }
+  }
+
+  /* ============================================================
+     EVENT LISTENERS (DELEGATION)
+     ============================================================ */
+  document.addEventListener('click', function(e){
+    var target = e.target.closest('[data-action]');
+    if (!target) return;
+    var action = target.getAttribute('data-action');
+
+    // Step 1: Send Phone OTP
+    if (action === 'send-phone-otp') {
+      var phoneInput = document.getElementById('ngoPhone');
+      var val = phoneInput ? phoneInput.value.replace(/\D/g, '') : '';
+      if (!val || val.length !== 10) {
+        toast('Please enter a valid 10-digit mobile number');
+        if (phoneInput) phoneInput.focus();
+        return;
+      }
+      state.phone = val;
+      state.phoneOtpSent = true;
+      state.demoPhoneOtp = String(Math.floor(100000 + Math.random() * 900000));
+      saveState();
+      render();
+      toast('OTP sent to ' + COUNTRY_CODE + ' ' + val + ' (Demo OTP: ' + state.demoPhoneOtp + ')');
+    }
+
+    // Step 1: Verify Phone OTP
+    if (action === 'verify-phone-otp') {
+      var otpInput = document.getElementById('phoneOtpInput');
+      var entered = otpInput ? otpInput.value.trim() : '';
+      if (entered === state.demoPhoneOtp || entered === '123456') {
+        state.phoneVerified = true;
+        saveState();
+        render();
+        toast('✓ Mobile number verified successfully');
+      } else {
+        toast('Incorrect OTP. Use ' + state.demoPhoneOtp + ' or 123456');
+      }
+    }
+
+    // Step 1: Send Email OTP
+    if (action === 'send-email-otp') {
+      var emailInput = document.getElementById('ngoEmail');
+      var emailVal = emailInput ? emailInput.value.trim() : '';
+      if (!emailVal || emailVal.indexOf('@') === -1 || emailVal.indexOf('.') === -1) {
+        toast('Please enter a valid official email address');
+        if (emailInput) emailInput.focus();
+        return;
+      }
+      state.email = emailVal;
+      state.emailSent = true;
+      state.demoEmailOtp = String(Math.floor(100000 + Math.random() * 900000));
+      saveState();
+      render();
+      toast('Verification code sent to ' + emailVal + ' (Demo OTP: ' + state.demoEmailOtp + ')');
+    }
+
+    // Step 1: Verify Email OTP
+    if (action === 'verify-email-otp') {
+      var eOtpInput = document.getElementById('emailOtpInput');
+      var enteredEmailOtp = eOtpInput ? eOtpInput.value.trim() : '';
+      if (enteredEmailOtp === state.demoEmailOtp || enteredEmailOtp === '123456') {
+        state.emailVerified = true;
+        saveState();
+        render();
+        toast('✓ Email address verified successfully');
+      } else {
+        toast('Incorrect OTP. Use ' + state.demoEmailOtp + ' or 123456');
+      }
+    }
+
+    // Step 1 Shortcut: Quick Auto-Verify
+    if (action === 'quick-verify-demo') {
+      state.phone = '9811234567';
+      state.phoneOtpSent = true;
+      state.phoneVerified = true;
+      state.email = 'contact@aarogyaseva.org';
+      state.emailSent = true;
+      state.emailVerified = true;
+      saveState();
+      render();
+      toast('⚡ Quick verify complete! Phone & Email confirmed.');
+    }
+
+    // Navigation: Step 1 -> Step 2
+    if (action === 'goto-step-2') {
+      if (!state.phoneVerified || !state.emailVerified) {
+        toast('Please verify both mobile and email to continue');
+        return;
+      }
+      state.step = 2;
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Navigation: Step 2 -> Step 1
+    if (action === 'goto-step-1') {
+      state.step = 1;
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Step 2 Shortcut: Fill Sample NGO Data
+    if (action === 'fill-sample-ngo') {
+      state.org.category = 'Registered Non-Governmental Organisation (NGO)';
+      state.org.name = 'Aarogya Seva Medical & Relief Trust';
+      state.org.regNumber = 'DL/NGO/2021/847291-MED';
+      state.org.address = 'Plot 42, Health Mission Complex, Institutional Area';
+      state.org.city = 'New Delhi';
+      state.org.state = 'Delhi';
+      state.org.pincode = '110016';
+      state.org.timings = 'Mon-Sat: 09:00 AM - 07:00 PM';
+      state.org.contactName = 'Dr. Sunita Sharma';
+      state.org.designation = 'Medical Director & Managing Trustee';
+      state.org.contactPhone = state.phone || '9811234567';
+      state.org.premisesPhoto = getSamplePremisesSvg();
+      state.org.premisesPhotoName = 'clinic_front_entrance.png';
+      state.org.licenseDoc = getSampleLicenseSvg();
+      state.org.licenseDocName = 'ngo_darpan_certificate.png';
+      saveState();
+      render();
+      toast('⚡ Sample NGO credentials & proofs filled!');
+    }
+
+    // Step 2: Upload dropzones
+    if (action === 'pick-premises-photo') {
+      var pInput = document.getElementById('premisesFileInput');
+      if (pInput) pInput.click();
+    }
+
+    if (action === 'remove-premises-photo') {
+      e.stopPropagation();
+      state.org.premisesPhoto = '';
+      state.org.premisesPhotoName = '';
+      var fileIn1 = document.getElementById('premisesFileInput');
+      if (fileIn1) fileIn1.value = '';
+      saveState();
+      render();
+      toast('Premises photo removed');
+    }
+
+    if (action === 'pick-license-doc') {
+      var lInput = document.getElementById('licenseFileInput');
+      if (lInput) lInput.click();
+    }
+
+    if (action === 'remove-license-doc') {
+      e.stopPropagation();
+      state.org.licenseDoc = '';
+      state.org.licenseDocName = '';
+      var fileIn2 = document.getElementById('licenseFileInput');
+      if (fileIn2) fileIn2.value = '';
+      saveState();
+      render();
+      toast('License document removed');
+    }
+
+    // Step 3: Copy App Tracking ID
+    if (action === 'copy-app-id') {
+      var text = state.org.appId || 'MED-NGO-2026-8942';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function(){
+          toast('Tracking ID copied to clipboard: ' + text);
+        }).catch(function(){
+          toast('Tracking ID: ' + text);
+        });
+      } else {
+        toast('Tracking ID: ' + text);
+      }
+    }
+
+    // Step 3: Toggle Demo Admin Approval
+    if (action === 'toggle-admin-approval') {
+      if (state.org.adminStatus === 'approved') {
+        state.org.adminStatus = 'under_review';
+        saveState();
+        render();
+        toast('Status reset to Under Admin Verification queue');
+      } else {
+        state.org.adminStatus = 'approved';
+        saveState();
+        render();
+        toast('✓ Organisation approved by Admin! Verified status active.');
+      }
+    }
+
+    // Step 3: Edit details
+    if (action === 'edit-details') {
+      state.step = 2;
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Step 3: Reset registration
+    if (action === 'reset-registration') {
+      if (confirm('Are you sure you want to start a new application? This will reset the current form.')) {
+        state.step = 1;
+        state.phone = '';
+        state.phoneOtpSent = false;
+        state.phoneVerified = false;
+        state.email = '';
+        state.emailSent = false;
+        state.emailVerified = false;
+        state.org = {
+          category: 'Registered Non-Governmental Organisation (NGO)',
+          name: '',
+          regNumber: '',
+          address: '',
+          city: '',
+          state: '',
+          pincode: '',
+          timings: 'Mon-Sat: 09:00 AM - 07:00 PM',
+          contactName: '',
+          designation: '',
+          contactPhone: '',
+          premisesPhoto: '',
+          premisesPhotoName: '',
+          licenseDoc: '',
+          licenseDocName: '',
+          appId: '',
+          submittedAt: '',
+          adminStatus: 'under_review'
+        };
+        try { localStorage.removeItem('meddonate_ngo'); } catch(e){}
+        render();
+        toast('Ready for new application');
+      }
+    }
+  });
+
+  // Handle file uploads on change
+  document.addEventListener('change', function(e){
+    if (e.target && e.target.id === 'premisesFileInput') {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(evt){
+        state.org.premisesPhoto = evt.target.result;
+        state.org.premisesPhotoName = file.name;
+        saveState();
+        render();
+        toast('Premises photo attached');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    if (e.target && e.target.id === 'licenseFileInput') {
+      var file2 = e.target.files && e.target.files[0];
+      if (!file2) return;
+      var reader2 = new FileReader();
+      reader2.onload = function(evt){
+        state.org.licenseDoc = evt.target.result;
+        state.org.licenseDocName = file2.name;
+        saveState();
+        render();
+        toast('License document attached');
+      };
+      reader2.readAsDataURL(file2);
+    }
+  });
+
+  // Handle Form Submission (Step 2 -> Step 3)
+  document.addEventListener('submit', function(e){
+    var form = e.target.closest('[data-form="org-details"]');
+    if (!form) return;
+    e.preventDefault();
+
+    var nameVal = (document.getElementById('orgName') ? document.getElementById('orgName').value : '').trim();
+    var regVal = (document.getElementById('regNumber') ? document.getElementById('regNumber').value : '').trim();
+    var addrVal = (document.getElementById('orgAddress') ? document.getElementById('orgAddress').value : '').trim();
+    var cityVal = (document.getElementById('orgCity') ? document.getElementById('orgCity').value : '').trim();
+    var stateVal = (document.getElementById('orgState') ? document.getElementById('orgState').value : '').trim();
+    var pincodeVal = (document.getElementById('orgPincode') ? document.getElementById('orgPincode').value : '').trim();
+    var contactVal = (document.getElementById('contactName') ? document.getElementById('contactName').value : '').trim();
+    var desigVal = (document.getElementById('designation') ? document.getElementById('designation').value : '').trim();
+
+    if (!nameVal || !regVal || !addrVal || !cityVal || !stateVal || !pincodeVal || !contactVal || !desigVal) {
+      toast('Please complete all required fields (*)');
+      return;
+    }
+
+    if (!state.org.premisesPhoto) {
+      // Auto attach sample if user hasn't uploaded so they aren't blocked
+      state.org.premisesPhoto = getSamplePremisesSvg();
+      state.org.premisesPhotoName = 'sample_clinic_photo.png';
+    }
+
+    if (!state.org.licenseDoc) {
+      // Auto attach sample if user hasn't uploaded so they aren't blocked
+      state.org.licenseDoc = getSampleLicenseSvg();
+      state.org.licenseDocName = 'sample_license_doc.png';
+    }
+
+    state.org.name = nameVal;
+    state.org.regNumber = regVal;
+    state.org.address = addrVal;
+    state.org.city = cityVal;
+    state.org.state = stateVal;
+    state.org.pincode = pincodeVal;
+    state.org.category = document.getElementById('orgCategory') ? document.getElementById('orgCategory').value : state.org.category;
+    state.org.timings = (document.getElementById('orgTimings') ? document.getElementById('orgTimings').value : '') || 'Mon-Sat: 09:00 AM - 07:00 PM';
+    state.org.contactName = contactVal;
+    state.org.designation = desigVal;
+    state.org.contactPhone = (document.getElementById('contactPhone') ? document.getElementById('contactPhone').value : '') || state.phone;
+
+    // Generate Application Tracking ID if not yet assigned
+    if (!state.org.appId) {
+      state.org.appId = 'MED-NGO-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
+    }
+    state.org.submittedAt = new Date().toLocaleString('en-IN', {
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+    state.org.adminStatus = 'under_review';
+
+    state.step = 3;
+    saveState();
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast('✓ Application submitted for Admin Verification!');
+  });
+
+  // Initial render
+  render();
+
+})();
+</script>
+</body>
+</html>

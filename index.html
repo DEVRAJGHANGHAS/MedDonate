@@ -24,9 +24,14 @@
           </svg></span>
         MedDonate
       </div>
-      <a href="donor-dashboard.html" style="font-size:0.85rem; font-weight:600; color:var(--green-700); text-decoration:none; padding:7px 14px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-pill); display:inline-flex; align-items:center; gap:6px;">
-        Donor Dashboard &rarr;
-      </a>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <a href="donor-dashboard.html" style="font-size:0.83rem; font-weight:600; color:var(--green-700); text-decoration:none; padding:7px 12px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-pill); display:inline-flex; align-items:center; gap:5px;">
+          Donor &rarr;
+        </a>
+        <a href="ngo-signup.html" style="font-size:0.83rem; font-weight:600; color:var(--gold-600); text-decoration:none; padding:7px 12px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-pill); display:inline-flex; align-items:center; gap:5px;">
+          NGO / Clinic &rarr;
+        </a>
+      </div>
     </header>
     <main>
       <section class="hero">
@@ -48,7 +53,7 @@
             <h3>I want to donate</h3>
             <p>List medicine you no longer need, with a quick photo and location.</p>
           </a>
-          <div class="choice-card ngo" tabindex="0" role="button" aria-label="Continue as an NGO or clinic">
+          <a href="ngo-signup.html" class="choice-card ngo" aria-label="Continue as an NGO or clinic">
             <div class="icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                 <path
@@ -59,7 +64,7 @@
             </div>
             <h3>I&rsquo;m an NGO / clinic</h3>
             <p>Get verified, then review and accept donations near you.</p>
-          </div>
+          </a>
         </div>
       </section>
     </main>
