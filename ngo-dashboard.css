@@ -850,3 +850,126 @@ body.dark-mode .badge-completed { background: rgba(26, 115, 232, 0.3); color: #8
   border-color: var(--green-600);
   box-shadow: 0 0 0 3px rgba(31, 92, 78, 0.1);
 }
+
+/* ========================== TOAST (TYPED, BOTTOM-RIGHT) ========================== */
+/* Feature 4 — replaces the old centred single toast */
+#toastContainer {
+  position: fixed;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  right: 24px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast-item {
+  padding: 12px 20px;
+  border-radius: var(--radius-pill);
+  font-size: 0.86rem;
+  font-weight: 500;
+  max-width: min(340px, calc(100vw - 48px));
+  box-shadow: 0 8px 24px rgba(0,0,0,.22);
+  opacity: 0;
+  transform: translateX(30px);
+  transition: opacity .3s ease, transform .3s ease;
+}
+.toast-item.toast-show {
+  opacity: 1;
+  transform: translateX(0);
+}
+.toast-success {
+  background: var(--green-900);
+  color: #fff;
+}
+.toast-error {
+  background: var(--red-600);
+  color: #fff;
+}
+
+/* Dark mode */
+body.dark-mode .toast-success { background: #1e3d31; color: #e2faf0; }
+body.dark-mode .toast-error   { background: #5a1a0f; color: #fcd9d0; }
+
+/* ========================== STOCK & EXPIRY BADGES ========================== */
+/* Feature 2 */
+.stock-badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+/* Red expiry-warn label (not a badge, more subtle) */
+.expiry-badge-warn {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--red-600);
+  background: var(--red-100);
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+/* Expired cards — grey out like .rejected but without the border stripe */
+.listing-card.card-expired {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+.listing-card.card-expired .med-name { color: var(--ink-soft); }
+
+/* ========================== REQUEST MEDICINE MODAL ========================== */
+/* Feature 3 — reuses .modal-overlay, .modal-content, .modal-head, .modal-body, .modal-foot, .form-group */
+/* No extra CSS needed beyond the hint paragraph already in shared styles */
+
+/* ========================== MY REQUESTS TABLE ========================== */
+/* Feature 3 */
+.my-requests-section { margin-top: 8px; }
+
+.my-requests-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+}
+
+.my-requests-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  font-size: 0.85rem;
+}
+
+.my-requests-table th,
+.my-requests-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.my-requests-table th {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--green-700);
+  background: var(--surface-2);
+}
+
+.my-requests-table tr:last-child td { border-bottom: none; }
+.my-requests-table tbody tr:hover { background: var(--surface-2); }
+
+/* Dark mode overrides */
+body.dark-mode .my-requests-table { background: var(--surface); }
+body.dark-mode .my-requests-table th { background: var(--surface-2); }
+
+@media (max-width: 375px) {
+  #toastContainer { right: 12px; left: 12px; }
+  .toast-item { max-width: 100%; }
+  .my-requests-table th,
+  .my-requests-table td { padding: 8px 10px; font-size: 0.78rem; }
+}
+
