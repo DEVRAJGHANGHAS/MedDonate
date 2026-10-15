@@ -1,0 +1,515 @@
+/* =================================================================
+   MedDonate — Global Animation System
+   animations.css  ·  linked on every page
+   ================================================================= */
+
+/* ======================== KEYFRAMES ======================== */
+
+@keyframes md-fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes md-fadeDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes md-fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes md-slideInRight {
+  from { opacity: 0; transform: translateX(44px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes md-slideInLeft {
+  from { opacity: 0; transform: translateX(-44px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes md-slideOutLeft {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-44px); }
+}
+
+@keyframes md-slideOutRight {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(44px); }
+}
+
+@keyframes md-popIn {
+  0%   { opacity: 0; transform: scale(0.45); }
+  72%  { transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes md-bounceIn {
+  0%   { opacity: 0; transform: scale(0.5) translateY(10px); }
+  55%  { opacity: 1; transform: scale(1.06); }
+  75%  { transform: scale(0.96); }
+  100% { transform: scale(1); }
+}
+
+@keyframes md-heroText {
+  from { opacity: 0; transform: translateY(22px); filter: blur(5px); }
+  to   { opacity: 1; transform: translateY(0);   filter: blur(0); }
+}
+
+@keyframes md-shake {
+  0%, 100% { transform: translateX(0); }
+  15%       { transform: translateX(-9px); }
+  30%       { transform: translateX(9px); }
+  45%       { transform: translateX(-6px); }
+  60%       { transform: translateX(6px); }
+  75%       { transform: translateX(-3px); }
+  90%       { transform: translateX(3px); }
+}
+
+@keyframes md-flash-green {
+  0%   { box-shadow: 0 0 0 0   rgba(42, 118, 99, 0); }
+  40%  { box-shadow: 0 0 0 10px rgba(42, 118, 99, 0.22); }
+  100% { box-shadow: 0 0 0 0   rgba(42, 118, 99, 0); }
+}
+
+@keyframes md-flash-red {
+  0%   { box-shadow: 0 0 0 0   rgba(179, 69, 47, 0); }
+  40%  { box-shadow: 0 0 0 10px rgba(179, 69, 47, 0.22); }
+  100% { box-shadow: 0 0 0 0   rgba(179, 69, 47, 0); }
+}
+
+@keyframes md-ripple {
+  from { transform: scale(0); opacity: 0.45; }
+  to   { transform: scale(4); opacity: 0; }
+}
+
+@keyframes md-shine {
+  from { left: -80%; }
+  to   { left: 130%; }
+}
+
+@keyframes md-progress {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+@keyframes md-pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.7; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+@keyframes md-confetti {
+  0%   { transform: translateY(-10px) rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(90px)  rotate(400deg); opacity: 0; }
+}
+
+@keyframes md-typing-dot {
+  0%, 80%, 100% { transform: scale(0.75); opacity: 0.4; }
+  40%            { transform: scale(1.15); opacity: 1; }
+}
+
+@keyframes md-checkDraw {
+  from { stroke-dashoffset: 36; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes md-cardArrive {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+@keyframes md-float {
+  0%, 100% { transform: translateY(0)    rotate(-4deg); }
+  50%       { transform: translateY(-14px) rotate(4deg); }
+}
+
+@keyframes md-drift {
+  0%   { transform: translate(0, 0)     scale(1); }
+  33%  { transform: translate(18px, -12px) scale(1.04); }
+  66%  { transform: translate(-10px, 8px)  scale(0.97); }
+  100% { transform: translate(0, 0)     scale(1); }
+}
+
+@keyframes md-skeletonShimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* ======================== PAGE PROGRESS BAR ======================== */
+
+#md-progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  width: 0%;
+  background: linear-gradient(90deg, #1F5C4E 0%, #2A7663 50%, #E3A23F 100%);
+  z-index: 9999;
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 10px rgba(42, 118, 99, 0.5);
+  transition: width 0.2s ease, opacity 0.35s ease;
+  pointer-events: none;
+}
+
+#md-progress-bar.md-bar-done {
+  opacity: 0;
+}
+
+/* ======================== SCROLL REVEAL ======================== */
+
+.md-reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity  0.52s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.md-reveal.md-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger helpers */
+.md-d1 { transition-delay: 0.04s; }
+.md-d2 { transition-delay: 0.09s; }
+.md-d3 { transition-delay: 0.14s; }
+.md-d4 { transition-delay: 0.20s; }
+.md-d5 { transition-delay: 0.27s; }
+.md-d6 { transition-delay: 0.35s; }
+
+/* ======================== BUTTON RIPPLE ======================== */
+
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.md-ripple-el {
+  position: absolute;
+  border-radius: 50%;
+  width: 70px; height: 70px;
+  margin: -35px 0 0 -35px;
+  background: rgba(255, 255, 255, 0.32);
+  pointer-events: none;
+  animation: md-ripple 0.55s ease-out forwards;
+}
+
+/* ======================== CARD HOVER — all card types ======================== */
+
+.donation-card,
+.listing-card,
+.choice-card,
+.stat-card,
+.card,
+.review-meta-box {
+  transition:
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.2s ease,
+    border-color 0.18s ease !important;
+}
+
+.donation-card:hover,
+.listing-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 10px 32px rgba(31, 92, 78, 0.11) !important;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px) scale(1.025) !important;
+  box-shadow: 0 6px 22px rgba(31, 92, 78, 0.1) !important;
+}
+
+/* Shine sweep overlay on card hover */
+.donation-card,
+.listing-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.donation-card::before,
+.listing-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  left: -80%;
+  width: 60%;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.1) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  transform: skewX(-18deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.donation-card:hover::before,
+.listing-card:hover::before {
+  animation: md-shine 0.5s ease forwards;
+}
+
+/* Card icon bounce on choice cards */
+.choice-card .icon {
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.choice-card:hover .icon {
+  transform: scale(1.14) rotate(-5deg) !important;
+}
+
+/* ======================== ACCEPT / REJECT FEEDBACK ======================== */
+
+.md-accept-flash {
+  animation: md-flash-green 0.6s ease both !important;
+  border-color: var(--green-600) !important;
+}
+
+.md-reject-shake {
+  animation: md-shake 0.45s ease both !important;
+}
+
+.md-reject-flash {
+  animation: md-flash-red 0.5s ease both !important;
+}
+
+/* ======================== BADGE POP ======================== */
+
+.md-badge-pop {
+  animation: md-popIn 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+}
+
+/* ======================== STEP TRANSITIONS ======================== */
+
+.md-step-exit-left  { animation: md-slideOutLeft  0.25s ease forwards; }
+.md-step-exit-right { animation: md-slideOutRight 0.25s ease forwards; }
+.md-step-enter-right { animation: md-slideInRight 0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both; }
+.md-step-enter-left  { animation: md-slideInLeft  0.32s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both; }
+
+/* ======================== PAGE-LEVEL ENTRANCE ======================== */
+
+header.top {
+  animation: md-fadeDown 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.brand .mark {
+  animation: md-popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s both;
+}
+
+/* Hero banners */
+.hero-banner {
+  animation: md-fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.hero-banner h1 {
+  animation: md-heroText 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
+}
+
+.hero-banner p {
+  animation: md-fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.28s both;
+}
+
+.hero-banner .hero-meta {
+  animation: md-fadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
+}
+
+.hero-banner .hero-actions {
+  animation: md-fadeIn 0.5s ease 0.45s both;
+}
+
+/* Range / service bar */
+.range-bar {
+  animation: md-fadeDown 0.48s cubic-bezier(0.22, 1, 0.36, 1) 0.28s both;
+}
+
+/* Stats grid stagger */
+.stats-grid {
+  animation: md-fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.38s both;
+}
+
+/* Section header */
+.section-header {
+  animation: md-fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.48s both;
+}
+
+/* Signup page elements */
+.page-head {
+  animation: md-heroText 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.step-track {
+  animation: md-fadeIn 0.4s ease 0.05s both;
+}
+
+.notice-strip {
+  animation: md-fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both;
+}
+
+.demo-bar {
+  animation: md-fadeDown 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+/* ======================== FORM INTERACTIONS ======================== */
+
+input, select, textarea {
+  transition:
+    border-color 0.18s ease,
+    box-shadow   0.18s ease !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  box-shadow: 0 0 0 3px rgba(42, 118, 99, 0.14) !important;
+}
+
+/* Upload box hover lift */
+.upload-box {
+  transition:
+    border-color 0.18s ease,
+    background   0.18s ease,
+    transform    0.18s ease !important;
+}
+
+.upload-box:hover {
+  transform: scale(1.015) !important;
+}
+
+/* ======================== NAV / BACK LINK ======================== */
+
+.back-link {
+  transition: color 0.15s ease, transform 0.18s ease !important;
+}
+
+.back-link:hover {
+  transform: translateX(-4px) !important;
+}
+
+/* ======================== MODAL & DRAWER ======================== */
+
+.modal-overlay.open .modal-content {
+  animation: md-bounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.side-panel,
+.chat-drawer {
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* ======================== FILTER PILLS ======================== */
+
+.filter-btn.active,
+.range-pill.active {
+  animation: md-popIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ======================== LIVE DOT RADAR ======================== */
+
+.live-dot {
+  position: relative;
+  display: inline-block;
+}
+
+.live-dot::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  background: rgba(198, 40, 40, 0.35);
+  animation: md-pulse-ring 1.7s ease-out infinite;
+}
+
+/* ======================== CHAT TYPING INDICATOR ======================== */
+
+.md-typing .msg-bubble span {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.md-typing-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--ink-soft, #566259);
+  display: inline-block;
+}
+
+.md-typing-dot:nth-child(1) { animation: md-typing-dot 1.2s ease 0s infinite; }
+.md-typing-dot:nth-child(2) { animation: md-typing-dot 1.2s ease 0.2s infinite; }
+.md-typing-dot:nth-child(3) { animation: md-typing-dot 1.2s ease 0.4s infinite; }
+
+/* ======================== CHAT MESSAGE BUBBLE ENTRANCE ======================== */
+
+.msg {
+  animation: md-fadeUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ======================== NEW CARD ARRIVAL ======================== */
+
+.md-card-new {
+  animation: md-cardArrive 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ======================== CONFETTI PARTICLE ======================== */
+
+.md-confetti-particle {
+  position: fixed;
+  width: 9px; height: 9px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 9998;
+  animation: md-confetti 1s ease-out forwards;
+}
+
+/* ======================== SVG CHECKMARK DRAW-ON ======================== */
+
+.md-check-svg path {
+  stroke-dasharray: 36;
+  stroke-dashoffset: 36;
+  animation: md-checkDraw 0.45s ease 0.1s forwards;
+}
+
+/* ======================== SKELETON SHIMMER ======================== */
+
+.md-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2, #E7ECE2) 25%,
+    var(--surface, #FBFCF9)    50%,
+    var(--surface-2, #E7ECE2) 75%
+  );
+  background-size: 200% 100%;
+  animation: md-skeletonShimmer 1.6s linear infinite;
+  border-radius: 6px;
+}
+
+/* ======================== TOAST BOUNCE ======================== */
+
+#toast.show {
+  animation: md-bounceIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ======================== PAGE EXIT FADE ======================== */
+
+body.md-page-exit {
+  opacity: 0;
+  transition: opacity 0.2s ease !important;
+}
+
+/* ======================== REDUCED MOTION ======================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration:        0.01ms !important;
+    animation-iteration-count: 1      !important;
+    transition-duration:       0.01ms !important;
+  }
+  .md-reveal {
+    opacity:   1   !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
