@@ -11,6 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,680&family=Work+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="animations.css">
 </head>
 
 <body>
@@ -35,6 +36,15 @@
     </header>
     <main>
       <section class="hero">
+
+        <!-- Floating pill background decoration -->
+        <svg class="pill-float" width="90" height="38" viewBox="0 0 90 38" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="1" y="1" width="88" height="36" rx="18" fill="var(--green-100)" stroke="var(--green-600)" stroke-width="2"/>
+          <line x1="45" y1="1" x2="45" y2="37" stroke="var(--green-600)" stroke-width="2"/>
+          <circle cx="22" cy="19" r="6" fill="var(--green-600)" opacity="0.4"/>
+          <circle cx="68" cy="19" r="6" fill="var(--gold-500)" opacity="0.4"/>
+        </svg>
+
         <div>
           <h1>Unused medicine finds<br>somewhere to go.</h1>
           <p class="lede">MedDonate connects people with unexpired, unused medicine to verified NGOs and clinics nearby
@@ -81,6 +91,7 @@
       }
     } catch(e){}
   </script>
+  <script src="animations.js" defer></script>
 </body>
 
 </html>
