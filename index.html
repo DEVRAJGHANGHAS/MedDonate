@@ -75,6 +75,10 @@
         var donorCard = document.querySelector('.choice-card.donor');
         if (donorCard) donorCard.href = 'donor-dashboard.html';
       }
+      if (localStorage.getItem('meddonate_ngo')) {
+        var ngoCard = document.querySelector('.choice-card.ngo');
+        if (ngoCard) ngoCard.href = 'ngo-dashboard.html';
+      }
     } catch(e){}
   </script>
 </body>

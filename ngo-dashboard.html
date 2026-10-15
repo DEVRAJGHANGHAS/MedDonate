@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,680&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="ngo-dashboard.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 <div id="shell">
@@ -23,6 +24,9 @@
       MedDonate
     </a>
     <div class="nav-right">
+      <button class="btn btn-ghost btn-sm" id="darkModeToggle" title="Toggle Dark Mode">
+        🌙 Dark
+      </button>
       <button class="btn btn-ghost btn-sm" id="openChatListBtn" title="Open donor messages">
         💬 Messages <span id="unreadBadge" class="badge badge-new" style="display:none; margin-left:4px; padding:2px 6px;">0</span>
       </button>
@@ -59,6 +63,60 @@
       </button>
     </div>
   </section>
+
+  <!-- ===== OVERVIEW STATS (Requested Feature) ===== -->
+  <section class="overview-stats">
+    <div class="o-stat-card">
+      <div class="icon">📦</div>
+      <div class="o-val">1,245</div>
+      <div class="o-lbl">Total Donations</div>
+    </div>
+    <div class="o-stat-card">
+      <div class="icon">🧑‍🤝‍🧑</div>
+      <div class="o-val">84</div>
+      <div class="o-lbl">Volunteers</div>
+    </div>
+    <div class="o-stat-card">
+      <div class="icon">💖</div>
+      <div class="o-val">4,500+</div>
+      <div class="o-lbl">Beneficiaries Helped</div>
+    </div>
+    <div class="o-stat-card">
+      <div class="icon">🚀</div>
+      <div class="o-val">12</div>
+      <div class="o-lbl">Active Projects</div>
+    </div>
+  </section>
+
+  <!-- ===== CAMPAIGN PROGRESS & CHART ===== -->
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+    <!-- Campaign Progress -->
+    <section class="campaign-section">
+      <div class="section-header" style="margin-bottom:10px;">
+        <h2 style="font-size:1.1rem;">Active Fundraiser: Rural Clinic Support <span class="status-badge badge-active" style="margin-left:8px;">Active</span></h2>
+      </div>
+      <div class="campaign-card">
+        <div class="camp-meta">
+          <span class="camp-raised">₹60,000 raised</span>
+          <span class="camp-goal">Goal: ₹1,00,000</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width: 60%;"></div>
+        </div>
+        <div class="camp-percent">60% Complete</div>
+      </div>
+    </section>
+
+    <!-- Donations Chart -->
+    <section class="chart-section">
+      <div class="section-header" style="margin-bottom:10px;">
+        <h2 style="font-size:1.1rem;">Donations by Month</h2>
+      </div>
+      <div style="background:var(--surface); padding:20px; border-radius:var(--radius-card); border:1px solid var(--line); height: 200px; display:flex; align-items:center; justify-content:center;">
+        <canvas id="donationsChart" style="max-height: 100%;"></canvas>
+      </div>
+    </section>
+  </div>
 
   <!-- ===== SERVICE RANGE BAR ===== -->
   <div class="range-bar">
@@ -115,6 +173,11 @@
       <button class="filter-btn" data-filter="rejected">Rejected</button>
       <button class="filter-btn" data-filter="pickedup">Picked Up</button>
     </div>
+  </div>
+
+  <!-- ===== LISTINGS SEARCH ===== -->
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search by medicine name, category, or donor..." autocomplete="off">
   </div>
 
   <!-- ===== LISTINGS GRID ===== -->
@@ -1058,6 +1121,56 @@
       setTimeout(simulateDemoListings, 400);
     }
   } catch(e) {}
+
+  /* ============================================================
+     NEW FEATURES (Dark Mode, Chart, Search Filter)
+     ============================================================ */
+  
+  // 1. Dark Mode Toggle
+  var darkToggleBtn = document.getElementById('darkModeToggle');
+  if (darkToggleBtn) {
+    darkToggleBtn.addEventListener('click', function() {
+      document.body.classList.toggle('dark-mode');
+      var isDark = document.body.classList.contains('dark-mode');
+      this.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+    });
+  }
+
+  // 2. Search Filter for Table/Grid
+  var searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      var term = e.target.value.toLowerCase();
+      var cards = document.querySelectorAll('#listingsContainer .listing-card');
+      cards.forEach(function(card) {
+        // Hides rows that don't match the typed term
+        card.style.display = card.textContent.toLowerCase().includes(term) ? '' : 'none';
+      });
+    });
+  }
+
+  // 3. Render Chart.js
+  var ctx = document.getElementById('donationsChart');
+  if (ctx && typeof Chart !== 'undefined') {
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+          label: 'Funds Raised (₹)',
+          data: [15000, 22000, 18000, 35000, 42000, 60000],
+          backgroundColor: '#1F5C4E',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
 
 })();
 </script>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedDonate — NGO Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,680&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="donor-signup.css">
+</head>
+<body>
+<div id="shell">
+  <header class="top">
+    <div class="brand">
+      <span class="mark"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M9.5 4.5L4.5 9.5C2.7 11.3 2.7 14.2 4.5 16C6.3 17.8 9.2 17.8 11 16L16 11C17.8 9.2 17.8 6.3 16 4.5C14.2 2.7 11.3 2.7 9.5 4.5Z" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+      MedDonate
+    </div>
+    <a href="index.html" class="back-link">&larr; Home</a>
+  </header>
+  <main id="app"></main>
+</div>
+<div id="toast"></div>
+
+<script>
+(function(){
+  var state = {
+    step: 1, // 1 = login/otp, 2 = details (if new), 3 = done
+    email: '', emailSent: false, emailVerified: false, demoEmailOtp: '123456',
+    profile: { ngoName:'', regNo:'', phone:'', city:'', address:'' }
+  };
+
+  // If already logged in, redirect to dashboard
+  try {
+    if (localStorage.getItem('meddonate_ngo')) {
+      window.location.href = 'ngo-dashboard.html';
+      return;
+    }
+  } catch(e){}
+
+  function toast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(function(){ t.classList.remove('show'); }, 2300);
+  }
+
+  function iconCheck(){ return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }
+  function iconGift(){ return '<svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M5 21V5a1 1 0 011-1h6a1 1 0 011 1v16M13 21v-9a1 1 0 011-1h4a1 1 0 011 1v9M9 8h.01M9 11h.01M9 14h.01" stroke="#1F5C4E" stroke-width="1.7" stroke-linecap="round"/><path d="M3 21h18" stroke="#1F5C4E" stroke-width="1.7" stroke-linecap="round"/></svg>'; }
+
+  function stepTrack(step, total){
+    var dots = '';
+    for (var i=1;i<=total;i++){
+      var cls = i === step ? 'active' : (i < step ? 'done' : '');
+      dots += '<span class="step-dot ' + cls + '"></span>';
+    }
+    return '<div class="step-track">' + dots + '</div>';
+  }
+
+  function pageHead(eyebrow, title){
+    return '<div class="page-head"><p class="eyebrow">' + eyebrow + '</p><h1>' + title + '</h1></div>';
+  }
+
+  function verifyStepView(){
+    return '' +
+    '<div class="notice-strip">Demo mode active: You can test email verification using demo OTP (default: <strong>123456</strong>).</div>' +
+    stepTrack(1,2) +
+    pageHead('NGO Login / Sign up &middot; Step 1 of 2', 'Verify organization email') +
+    '<div class="card stack">' +
+      '<div>' +
+        '<label for="emailInput">Official Email address</label>' +
+        '<div class="verify-row">' +
+          '<div class="field">' +
+            '<input type="email" id="emailInput" placeholder="contact@ngo.org" value="' + esc(state.email) + '" ' + (state.emailVerified ? 'disabled' : '') + '>' +
+          '</div>' +
+          (state.emailVerified
+            ? '<span class="badge">' + iconCheck() + ' Verified</span>'
+            : '<button class="btn btn-ghost" data-action="send-email-otp">' + (state.emailSent ? 'Resend' : 'Send OTP') + '</button>'
+          ) +
+        '</div>' +
+        (!state.emailVerified && state.emailSent ?
+          '<div class="field" style="margin-top:12px;">' +
+            '<label for="emailOtp">Enter OTP <span style="font-weight:400; color:var(--green-700);">(Demo OTP: <strong>' + state.demoEmailOtp + '</strong>)</span></label>' +
+            '<div class="verify-row">' +
+              '<div class="field" style="margin-bottom:0;"><input type="text" id="emailOtp" inputmode="numeric" maxlength="6" placeholder="Enter ' + state.demoEmailOtp + '"></div>' +
+              '<button class="btn btn-primary" data-action="verify-email-otp">Verify</button>' +
+            '</div>' +
+            '<p class="hint">Enter <strong>' + state.demoEmailOtp + '</strong> or <strong>123456</strong> to verify.</p>' +
+          '</div>'
+        : '') +
+      '</div>' +
+      '<button class="btn btn-gold btn-block" data-action="goto-profile" ' + (state.emailVerified ? '' : 'disabled') + '>Continue</button>' +
+    '</div>';
+  }
+
+  function profileStepView(){
+    var p = state.profile;
+    return '' +
+    stepTrack(2,2) +
+    pageHead('NGO Details &middot; Step 2 of 2', 'Organization Information') +
+    '<form class="card" data-form="profile">' +
+      '<div class="field"><label for="ngoName">Organization Name *</label><input type="text" id="ngoName" required value="' + esc(p.ngoName) + '"></div>' +
+      '<div class="two-col">' +
+        '<div class="field"><label for="regNo">Registration/License No. *</label><input type="text" id="regNo" required value="' + esc(p.regNo) + '"></div>' +
+        '<div class="field"><label for="phone">Contact Phone *</label><input type="tel" id="phone" maxlength="10" required value="' + esc(p.phone) + '"></div>' +
+      '</div>' +
+      '<div class="two-col">' +
+        '<div class="field"><label for="city">City *</label><input type="text" id="city" required value="' + esc(p.city) + '"></div>' +
+        '<div class="field"><label for="address">Full Address *</label><input type="text" id="address" required value="' + esc(p.address) + '"></div>' +
+      '</div>' +
+      '<p class="hint">Your details are verified to ensure safe donations.</p>' +
+      '<button class="btn btn-primary btn-block" type="submit" style="margin-top:6px;">Complete Registration</button>' +
+    '</form>';
+  }
+
+  function doneStepView(){
+    var p = state.profile;
+    return '' +
+    '<div class="card success-card">' +
+      '<div class="icon-circle">' + iconGift() + '</div>' +
+      '<h1 style="font-size:1.5rem;">Welcome, ' + esc(p.ngoName || 'Partner') + '</h1>' +
+      '<p>Your NGO account has been created successfully. You can now access your dashboard to view and accept donations in your area.</p>' +
+      '<div style="display:flex; justify-content:center; gap:10px; margin-top:16px; flex-wrap:wrap;">' +
+        '<a href="ngo-dashboard.html" class="btn btn-primary">Go to NGO Dashboard &rarr;</a>' +
+        '<a href="index.html" class="btn btn-ghost">Back to home</a>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function render(){
+    var app = document.getElementById('app');
+    if (state.step === 1) app.innerHTML = verifyStepView();
+    else if (state.step === 2) app.innerHTML = profileStepView();
+    else app.innerHTML = doneStepView();
+  }
+
+  document.getElementById('shell').addEventListener('input', function(e){
+    if (e.target.id === 'phone') {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    }
+    if (e.target.id === 'emailOtp') {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    }
+  });
+
+  document.getElementById('shell').addEventListener('click', function(e){
+    var t = e.target.closest('[data-action]');
+    if (!t) return;
+    var action = t.getAttribute('data-action');
+
+    if (action === 'send-email-otp') {
+      var v = document.getElementById('emailInput').value.trim();
+      if (!v || v.indexOf('@') === -1) { toast('Enter a valid email first'); return; }
+      var demoEmailCode = Math.floor(100000 + Math.random() * 900000).toString();
+      state.demoEmailOtp = demoEmailCode;
+      state.email = v;
+      state.emailSent = true;
+      render();
+      toast('Demo OTP sent: ' + demoEmailCode);
+      return;
+    }
+
+    if (action === 'verify-email-otp') {
+      var code = document.getElementById('emailOtp').value.trim();
+      if (!code) { toast('Enter the OTP'); return; }
+      if (code === state.demoEmailOtp || code === '123456') {
+        state.emailVerified = true;
+        render();
+        toast('Email verified successfully!');
+      } else {
+        toast('Incorrect OTP — enter ' + state.demoEmailOtp + ' or 123456');
+      }
+      return;
+    }
+
+    if (action === 'goto-profile') {
+      state.step = 2;
+      render();
+      window.scrollTo({top:0, behavior:'smooth'});
+      return;
+    }
+  });
+
+  document.getElementById('shell').addEventListener('submit', function(e){
+    var form = e.target.closest('[data-form="profile"]');
+    if (!form) return;
+    e.preventDefault();
+
+    state.profile.ngoName = document.getElementById('ngoName').value.trim();
+    state.profile.regNo = document.getElementById('regNo').value.trim();
+    state.profile.phone = document.getElementById('phone').value.trim();
+    state.profile.city = document.getElementById('city').value.trim();
+    state.profile.address = document.getElementById('address').value.trim();
+
+    try {
+      localStorage.setItem('meddonate_ngo', JSON.stringify({
+        ngoName: state.profile.ngoName,
+        regNo: state.profile.regNo,
+        phone: state.profile.phone,
+        city: state.profile.city,
+        address: state.profile.address,
+        email: state.email
+      }));
+    } catch(err){}
+
+    state.step = 3;
+    render();
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
