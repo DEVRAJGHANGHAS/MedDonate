@@ -913,6 +913,36 @@
 
     state.step = 3;
     saveState();
+
+    // ── Push to admin applications list ──────────────────────────
+    try {
+      var apps = JSON.parse(localStorage.getItem('meddonate_ngo_applications') || '[]');
+      var o = state.org;
+      var existingIdx = apps.findIndex(function(a){ return a.id === o.appId; });
+      var entry = {
+        id:           o.appId,
+        orgName:      o.name || '',
+        regNumber:    o.regNumber || '',
+        category:     o.category || 'ngo',
+        address:      o.address || '',
+        city:         o.city || '',
+        state:        o.orgState || '',
+        pin:          o.pin || '',
+        contactName:  o.contactPerson || '',
+        contactPhone: o.contactPhone || state.phone || '',
+        email:        state.email || '',
+        phone:        state.phone || '',
+        otpVerified:  !!(state.phoneVerified && state.emailVerified),
+        submittedAt:  new Date().toISOString(),
+        status:       'pending',
+        reviewedAt:   null,
+        rejectReason: null
+      };
+      if (existingIdx > -1) { apps[existingIdx] = entry; } else { apps.push(entry); }
+      localStorage.setItem('meddonate_ngo_applications', JSON.stringify(apps));
+    } catch(e){}
+    // ─────────────────────────────────────────────────────────────
+
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     toast('✓ Application submitted for Admin Verification!');
