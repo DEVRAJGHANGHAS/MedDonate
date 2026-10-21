@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — MedDonate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin-dashboard.css">
+  <link rel="stylesheet" href="animations.css">
+</head>
+<body>
+
+<!-- ============================================================
+     LOGIN SCREEN
+============================================================ -->
+<div id="admin-login">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="mark">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/><path d="M11 6h2v2h-2zM11 16h2v2h-2z" opacity=".4"/></svg>
+      </div>
+      <div class="brand-name">
+        MedDonate
+        <span>Admin Portal</span>
+      </div>
+    </div>
+
+    <h1>Welcome back 👋</h1>
+    <p class="login-sub">Sign in to review NGO applications and manage the platform.</p>
+
+    <div class="login-demo-hint">
+      ℹ️&nbsp; Demo credentials — Username: <code>admin</code> &nbsp;Password: <code>admin@2024</code>
+    </div>
+
+    <div class="login-err" id="login-err">Incorrect username or password. Please try again.</div>
+
+    <div class="field-group">
+      <label for="login-user">Username</label>
+      <input type="text" id="login-user" placeholder="admin" autocomplete="username">
+    </div>
+    <div class="field-group">
+      <label for="login-pass">Password</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()">
+      Sign In →
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================
+     MAIN ADMIN APP
+============================================================ -->
+<div id="admin-app">
+
+  <!-- HEADER -->
+  <header class="admin-header">
+    <a href="index.html" class="brand">
+      <div class="mark">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="brand-text">
+        MedDonate
+        <span>Admin Panel</span>
+      </div>
+    </a>
+    <span class="admin-badge">Admin</span>
+    <div class="header-spacer"></div>
+    <div class="header-actions">
+      <button class="notif-btn" id="notif-btn" title="Notifications" onclick="showToast('No new notifications','gold')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="notif-dot" id="notif-dot"></span>
+      </button>
+      <div class="admin-avatar" id="admin-avatar">A</div>
+      <span class="header-username">Administrator</span>
+      <button class="logout-btn" onclick="doLogout()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        Logout
+      </button>
+    </div>
+  </header>
+
+  <!-- BODY -->
+  <div class="admin-body">
+    <div class="admin-container">
+
+      <!-- STATS ROW -->
+      <div class="stats-row">
+        <div class="stat-tile">
+          <div class="stat-icon green">📋</div>
+          <div class="stat-info">
+            <div class="stat-val" id="st-total">0</div>
+            <div class="stat-label">Total Applications</div>
+          </div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-icon gold">⏳</div>
+          <div class="stat-info">
+            <div class="stat-val" id="st-pending">0</div>
+            <div class="stat-label">Pending Review</div>
+          </div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-info">
+            <div class="stat-val" id="st-approved">0</div>
+            <div class="stat-label">Approved</div>
+          </div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-icon red">❌</div>
+          <div class="stat-info">
+            <div class="stat-val" id="st-rejected">0</div>
+            <div class="stat-label">Rejected</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABS -->
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="applications" onclick="switchTab('applications')">
+          🏥 Applications <span class="tab-count" id="tab-count-apps">0</span>
+        </button>
+        <button class="tab-btn" data-tab="donors" onclick="switchTab('donors')">
+          👤 Donors <span class="tab-count" id="tab-count-donors">0</span>
+        </button>
+        <button class="tab-btn" data-tab="activity" onclick="switchTab('activity')">
+          📜 Activity Log
+        </button>
+      </div>
+
+      <!-- === APPLICATIONS TAB === -->
+      <div id="tab-applications">
+        <div class="section-hd">
+          <div>
+            <h2>NGO / Clinic Applications</h2>
+            <p>Review submitted applications and approve or reject them.</p>
+          </div>
+        </div>
+
+        <!-- Filter + Search -->
+        <div class="filter-row">
+          <button class="filter-pill active" data-filter="all"      onclick="setFilter('all',this)">All</button>
+          <button class="filter-pill"        data-filter="pending"  onclick="setFilter('pending',this)">⏳ Pending</button>
+          <button class="filter-pill"        data-filter="approved" onclick="setFilter('approved',this)">✅ Approved</button>
+          <button class="filter-pill"        data-filter="rejected" onclick="setFilter('rejected',this)">❌ Rejected</button>
+          <div class="search-wrap">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="app-search" placeholder="Search by name or reg. number…" oninput="renderApps()">
+          </div>
+        </div>
+
+        <div class="app-grid" id="app-grid"></div>
+      </div>
+
+      <!-- === DONORS TAB === -->
+      <div id="tab-donors" style="display:none">
+        <div class="section-hd">
+          <div>
+            <h2>Registered Donors</h2>
+            <p>All users who signed up as medicine donors.</p>
+          </div>
+        </div>
+        <div class="donors-grid" id="donors-grid"></div>
+      </div>
+
+      <!-- === ACTIVITY LOG TAB === -->
+      <div id="tab-activity" style="display:none">
+        <div class="section-hd">
+          <div><h2>Activity Log</h2><p>Recent admin actions and platform events.</p></div>
+        </div>
+        <div style="background:var(--surface);border:1.5px solid var(--line);border-radius:var(--radius-card);padding:8px 20px;box-shadow:var(--shadow-sm);">
+          <div class="activity-list" id="activity-list"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     DETAILS MODAL
+============================================================ -->
+<div class="modal-overlay" id="details-modal">
+  <div class="modal-box" style="max-width:600px">
+    <div class="modal-head">
+      <h3 id="dm-title">Application Details</h3>
+      <button class="modal-close" onclick="closeModal('details-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="dm-body"></div>
+    <div class="modal-footer" id="dm-footer"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     REJECT MODAL
+============================================================ -->
+<div class="modal-overlay" id="reject-modal">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-head">
+      <h3>Reject Application</h3>
+      <button class="modal-close" onclick="closeModal('reject-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.87rem;color:var(--ink-soft);margin-bottom:16px;">
+        Select a reason for rejection. This message will be visible to the applicant.
+      </p>
+      <div class="reject-reasons" id="reject-reasons">
+        <label class="reason-option">
+          <input type="radio" name="rr" value="Incomplete or missing documents (license, registration, premises photo)."> Incomplete / missing documents
+        </label>
+        <label class="reason-option">
+          <input type="radio" name="rr" value="Registration number could not be verified with authorities."> Registration number unverifiable
+        </label>
+        <label class="reason-option">
+          <input type="radio" name="rr" value="The organisation does not operate within a supported area or category."> Outside supported area / category
+        </label>
+        <label class="reason-option">
+          <input type="radio" name="rr" value="Duplicate application detected. Another account is already registered with the same details."> Duplicate application
+        </label>
+        <label class="reason-option">
+          <input type="radio" name="rr" value="custom"> Other (specify below)
+        </label>
+      </div>
+      <textarea class="textarea-field" id="reject-custom" placeholder="Add any additional notes or a custom reason…"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('reject-modal')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmReject()">Confirm Rejection</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="admin-toast"></div>
+
+<!-- ============================================================
+     SCRIPT
+============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  /* ── AUTH ── */
+  var ADMIN_USER = 'admin';
+  var ADMIN_PASS = 'admin@2024';
+
+  function doLogin() {
+    var u = document.getElementById('login-user').value.trim();
+    var p = document.getElementById('login-pass').value;
+    var err = document.getElementById('login-err');
+    if (u === ADMIN_USER && p === ADMIN_PASS) {
+      sessionStorage.setItem('meddonate_admin', '1');
+      err.classList.remove('show');
+      launchApp();
+    } else {
+      err.classList.add('show');
+      document.getElementById('login-pass').value = '';
+    }
+  }
+  window.doLogin = doLogin;
+
+  // Allow Enter key on login form
+  document.getElementById('login-pass').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('login-user').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') document.getElementById('login-pass').focus();
+  });
+
+  function doLogout() {
+    sessionStorage.removeItem('meddonate_admin');
+    document.getElementById('admin-app').classList.remove('visible');
+    document.getElementById('admin-login').style.display = 'flex';
+    showToast('Logged out successfully', 'gold');
+  }
+  window.doLogout = doLogout;
+
+  function launchApp() {
+    document.getElementById('admin-login').style.display = 'none';
+    document.getElementById('admin-app').classList.add('visible');
+    init();
+  }
+
+  // Auto-login if session exists
+  if (sessionStorage.getItem('meddonate_admin') === '1') {
+    launchApp();
+  }
+
+  /* ── DEMO DATA ── */
+  var DEMO_APPS = [
+    {
+      id: 'demo_1',
+      orgName: 'HealthCare Foundation',
+      regNumber: 'NGO/MH/2024/1234',
+      category: 'ngo',
+      address: '45, Relief Road, Andheri West',
+      city: 'Mumbai', state: 'Maharashtra', pin: '400053',
+      contactName: 'Dr. Ravi Sharma',
+      contactPhone: '9876501234',
+      email: 'ravi@healthcarefound.org',
+      phone: '+91 98765 01234',
+      otpVerified: true,
+      submittedAt: new Date(Date.now() - 2*24*60*60*1000).toISOString(),
+      status: 'pending', reviewedAt: null, rejectReason: null
+    },
+    {
+      id: 'demo_2',
+      orgName: 'CureFirst Clinic',
+      regNumber: 'CLIN/GJ/2023/9087',
+      category: 'clinic',
+      address: '12, Navrangpura, Near Gujarat Uni',
+      city: 'Ahmedabad', state: 'Gujarat', pin: '380009',
+      contactName: 'Dr. Neha Patel',
+      contactPhone: '9898001122',
+      email: 'curefirst@gmail.com',
+      phone: '+91 98980 01122',
+      otpVerified: true,
+      submittedAt: new Date(Date.now() - 1*24*60*60*1000).toISOString(),
+      status: 'pending', reviewedAt: null, rejectReason: null
+    },
+    {
+      id: 'demo_3',
+      orgName: 'RuralAid Medical Society',
+      regNumber: 'NGO/RJ/2022/4421',
+      category: 'ngo',
+      address: 'Village Road, Near AIIMS, Jodhpur Bypass',
+      city: 'Jodhpur', state: 'Rajasthan', pin: '342001',
+      contactName: 'Suresh Meena',
+      contactPhone: '9414221199',
+      email: 'ruralaid@ngo.in',
+      phone: '+91 94142 21199',
+      otpVerified: true,
+      submittedAt: new Date(Date.now() - 5*24*60*60*1000).toISOString(),
+      status: 'approved',
+      reviewedAt: new Date(Date.now() - 4*24*60*60*1000).toISOString(),
+      rejectReason: null
+    },
+    {
+      id: 'demo_4',
+      orgName: 'MedRelief Trust',
+      regNumber: 'NGO/UP/2024/7730',
+      category: 'ngo',
+      address: 'Sector 9, Gomti Nagar',
+      city: 'Lucknow', state: 'Uttar Pradesh', pin: '226010',
+      contactName: 'Anjali Singh',
+      contactPhone: '9935771234',
+      email: 'medrelief@up.org',
+      phone: '+91 99357 71234',
+      otpVerified: true,
+      submittedAt: new Date(Date.now() - 7*24*60*60*1000).toISOString(),
+      status: 'rejected',
+      reviewedAt: new Date(Date.now() - 6*24*60*60*1000).toISOString(),
+      rejectReason: 'Incomplete or missing documents (license, registration, premises photo).'
+    },
+    {
+      id: 'demo_5',
+      orgName: 'HopeHeal Hospital Trust',
+      regNumber: 'HOSP/KA/2023/2210',
+      category: 'hospital',
+      address: '100 Ft Road, Indiranagar',
+      city: 'Bengaluru', state: 'Karnataka', pin: '560038',
+      contactName: 'Mr. Kiran Rao',
+      contactPhone: '9844009900',
+      email: 'hopeheal@hospital.in',
+      phone: '+91 98440 09900',
+      otpVerified: true,
+      submittedAt: new Date(Date.now() - 3*60*60*1000).toISOString(),
+      status: 'pending', reviewedAt: null, rejectReason: null
+    },
+    {
+      id: 'demo_6',
+      orgName: 'SevaBhav Charitable Clinic',
+      regNumber: 'CLIN/DL/2024/0551',
+      category: 'clinic',
+      address: '22A, Lajpat Nagar Part II',
+      city: 'New Delhi', state: 'Delhi', pin: '110024',
+      contactName: 'Dr. Priya Batra',
+      contactPhone: '9810001122',
+      email: 'sevabhav@clinic.org',
+      phone: '+91 98100 01122',
+      otpVerified: true,
+      submittedAt: new Date(Date.now() - 30*60*1000).toISOString(),
+      status: 'pending', reviewedAt: null, rejectReason: null
+    }
+  ];
+
+  var DEMO_DONORS = [
+    { name: 'Arjun Mehta',    email: 'arjun@gmail.com',    city: 'Mumbai',    joined: '2024-09-10', donations: 4, active: true },
+    { name: 'Priya Sharma',   email: 'priya@yahoo.com',    city: 'Delhi',     joined: '2024-09-22', donations: 2, active: true },
+    { name: 'Rohit Verma',    email: 'rohit@email.com',    city: 'Pune',      joined: '2024-10-01', donations: 1, active: true },
+    { name: 'Sana Khan',      email: 'sana@hotmail.com',   city: 'Hyderabad', joined: '2024-10-05', donations: 3, active: true },
+    { name: 'Vikram Joshi',   email: 'vikram@live.com',    city: 'Bengaluru', joined: '2024-10-08', donations: 0, active: false },
+    { name: 'Meera Nair',     email: 'meera@gmail.com',    city: 'Kochi',     joined: '2024-10-12', donations: 5, active: true },
+    { name: 'Aditya Gupta',   email: 'aditya@gmail.com',   city: 'Jaipur',    joined: '2024-10-14', donations: 1, active: true },
+    { name: 'Sneha Patel',    email: 'sneha@corp.in',      city: 'Ahmedabad', joined: '2024-10-15', donations: 2, active: true }
+  ];
+
+  /* ── STATE ── */
+  var currentFilter = 'all';
+  var currentTab    = 'applications';
+  var rejectTargetId = null;
+
+  /* ── DATA HELPERS ── */
+  function getApps() {
+    var stored = [];
+    try { stored = JSON.parse(localStorage.getItem('meddonate_ngo_applications') || '[]'); } catch(e) {}
+    // Merge demo apps (if no real apps with same id exist)
+    var ids = stored.map(function(a){ return a.id; });
+    DEMO_APPS.forEach(function(d){
+      if (ids.indexOf(d.id) === -1) stored.push(d);
+    });
+    return stored;
+  }
+
+  function saveApps(apps) {
+    // Only save the non-demo entries + any modified demo entries
+    localStorage.setItem('meddonate_ngo_applications', JSON.stringify(apps));
+  }
+
+  function getDonors() {
+    var stored = [];
+    try { stored = JSON.parse(localStorage.getItem('meddonate_users') || '[]'); } catch(e) {}
+    if (!stored.length) return DEMO_DONORS;
+    return stored.map(function(u){
+      return {
+        name: (u.fullName || u.name || 'Donor'),
+        email: u.email || '—',
+        city: u.city || u.location || '—',
+        joined: u.joinedAt ? u.joinedAt.slice(0,10) : '2024-10-01',
+        donations: u.donationsCount || 0,
+        active: true
+      };
+    });
+  }
+
+  /* ── INIT ── */
+  function init() {
+    renderStats();
+    renderApps();
+    renderDonors();
+    renderActivity();
+    updateTabCounts();
+    // Stats counter animation
+    animateStats();
+    // Notification dot: show if pending apps > 0
+    var apps = getApps();
+    var pending = apps.filter(function(a){ return a.status === 'pending'; });
+    document.getElementById('notif-dot').style.display = pending.length ? 'block' : 'none';
+  }
+
+  /* ── STATS ── */
+  function renderStats() {
+    var apps = getApps();
+    var total    = apps.length;
+    var pending  = apps.filter(function(a){ return a.status === 'pending'; }).length;
+    var approved = apps.filter(function(a){ return a.status === 'approved'; }).length;
+    var rejected = apps.filter(function(a){ return a.status === 'rejected'; }).length;
+    document.getElementById('st-total').setAttribute('data-target', total);
+    document.getElementById('st-pending').setAttribute('data-target', pending);
+    document.getElementById('st-approved').setAttribute('data-target', approved);
+    document.getElementById('st-rejected').setAttribute('data-target', rejected);
+  }
+
+  function animateStats() {
+    ['st-total','st-pending','st-approved','st-rejected'].forEach(function(id, i){
+      var el = document.getElementById(id);
+      var target = parseInt(el.getAttribute('data-target') || '0', 10);
+      setTimeout(function(){
+        var start = 0;
+        var step = function(){
+          start += Math.ceil((target - start) / 6) || 1;
+          if (start >= target) { el.textContent = target; return; }
+          el.textContent = start;
+          requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      }, 350 + i * 100);
+    });
+  }
+
+  function updateTabCounts() {
+    var apps = getApps();
+    document.getElementById('tab-count-apps').textContent = apps.length;
+    document.getElementById('tab-count-donors').textContent = getDonors().length;
+  }
+
+  /* ── TABS ── */
+  function switchTab(tab) {
+    currentTab = tab;
+    ['applications','donors','activity'].forEach(function(t){
+      document.getElementById('tab-' + t).style.display = (t === tab) ? '' : 'none';
+    });
+    document.querySelectorAll('.tab-btn').forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
+    });
+  }
+  window.switchTab = switchTab;
+
+  /* ── FILTER ── */
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-pill').forEach(function(p){ p.classList.remove('active'); });
+    btn.classList.add('active');
+    renderApps();
+  }
+  window.setFilter = setFilter;
+
+  /* ── RENDER APPLICATIONS ── */
+  function renderApps() {
+    var apps   = getApps();
+    var query  = (document.getElementById('app-search').value || '').toLowerCase().trim();
+
+    var filtered = apps.filter(function(a){
+      var matchFilter = (currentFilter === 'all') || (a.status === currentFilter);
+      var matchSearch = !query ||
+        a.orgName.toLowerCase().includes(query) ||
+        a.regNumber.toLowerCase().includes(query) ||
+        (a.city || '').toLowerCase().includes(query);
+      return matchFilter && matchSearch;
+    });
+
+    var grid = document.getElementById('app-grid');
+
+    if (!filtered.length) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1">' +
+        '<div class="empty-icon">📭</div>' +
+        '<h3>No applications found</h3>' +
+        '<p>Try changing the filter or search term.</p>' +
+        '</div>';
+      return;
+    }
+
+    grid.innerHTML = filtered.map(function(a){ return appCardHTML(a); }).join('');
+  }
+  window.renderApps = renderApps;
+
+  function catBadge(cat) {
+    var map = { ngo:'badge-ngo', clinic:'badge-clinic', hospital:'badge-hospital' };
+    var cls = map[cat] || 'badge-ngo';
+    var label = cat ? (cat.charAt(0).toUpperCase() + cat.slice(1)) : 'NGO';
+    return '<span class="badge ' + cls + '">' + label + '</span>';
+  }
+
+  function statusBadge(status) {
+    var map = { pending:'badge-pending', approved:'badge-approved', rejected:'badge-rejected' };
+    var icons = { pending:'⏳', approved:'✅', rejected:'❌' };
+    var label = status.charAt(0).toUpperCase() + status.slice(1);
+    return '<span class="badge ' + (map[status]||'badge-pending') + '">' + (icons[status]||'') + ' ' + label + '</span>';
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+  }
+
+  function timeAgo(iso) {
+    if (!iso) return '';
+    var diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+    if (diff < 60)   return diff + 's ago';
+    if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+    return Math.floor(diff/86400) + 'd ago';
+  }
+
+  function appCardHTML(a) {
+    var catIcons = { ngo:'🏥', clinic:'🩺', hospital:'🏨' };
+    var icon = catIcons[a.category] || '🏥';
+    var rejectBlock = a.status === 'rejected' && a.rejectReason
+      ? '<div class="card-reject-reason">❗ <span><strong>Reason:</strong> ' + escHtml(a.rejectReason) + '</span></div>'
+      : '';
+    var actionBtns = '';
+    if (a.status === 'pending') {
+      actionBtns =
+        '<button class="btn btn-primary btn-sm" onclick="approveApp(\'' + a.id + '\')">✓ Approve</button>' +
+        '<button class="btn btn-danger  btn-sm" onclick="openReject(\'' + a.id + '\')">✗ Reject</button>';
+    } else if (a.status === 'rejected') {
+      actionBtns = '<button class="btn btn-ghost btn-sm" onclick="approveApp(\'' + a.id + '\')">↩ Re-approve</button>';
+    }
+    return '<div class="app-card status-' + a.status + '" id="card-' + a.id + '">' +
+      '<div class="card-top">' +
+        '<div class="card-icon">' + icon + '</div>' +
+        '<div class="card-title-wrap">' +
+          '<div class="card-title">' + escHtml(a.orgName) + '</div>' +
+          '<div class="card-reg">Reg: ' + escHtml(a.regNumber) + '</div>' +
+        '</div>' +
+        statusBadge(a.status) +
+      '</div>' +
+      '<div class="card-meta">' +
+        '<div class="meta-row">' +
+          svgIcon('map-pin') +
+          escHtml(a.address) + ', ' + escHtml(a.city) + ', ' + escHtml(a.state) +
+        '</div>' +
+        '<div class="meta-row">' +
+          svgIcon('user') +
+          '<strong>Contact:</strong>&nbsp;' + escHtml(a.contactName) + ' · ' + escHtml(a.contactPhone) +
+        '</div>' +
+        '<div class="meta-row">' +
+          svgIcon('mail') +
+          escHtml(a.email) +
+        '</div>' +
+        '<div class="meta-row">' +
+          svgIcon('clock') +
+          'Submitted ' + timeAgo(a.submittedAt) + ' · ' + fmtDate(a.submittedAt) +
+        '</div>' +
+      '</div>' +
+      rejectBlock +
+      '<div class="card-footer">' +
+        '<span style="display:flex;gap:6px;align-items:center;">' + catBadge(a.category) +
+        (a.otpVerified ? '<span class="badge badge-approved" style="font-size:.68rem">🔒 OTP Verified</span>' : '') +
+        '</span>' +
+        '<button class="btn btn-secondary btn-sm" onclick="openDetails(\'' + a.id + '\')">📋 View Details</button>' +
+        actionBtns +
+      '</div>' +
+    '</div>';
+  }
+
+  /* ── APPROVE ── */
+  function approveApp(id) {
+    var apps = getApps();
+    var idx  = apps.findIndex(function(a){ return a.id === id; });
+    if (idx === -1) return;
+    apps[idx].status     = 'approved';
+    apps[idx].reviewedAt = new Date().toISOString();
+    apps[idx].rejectReason = null;
+    saveApps(apps);
+
+    // Update meddonate_ngo if it matches
+    try {
+      var ngo = JSON.parse(localStorage.getItem('meddonate_ngo') || 'null');
+      if (ngo && (ngo.orgName === apps[idx].orgName || ngo.regNumber === apps[idx].regNumber)) {
+        ngo.status = 'approved';
+        localStorage.setItem('meddonate_ngo', JSON.stringify(ngo));
+      }
+    } catch(e) {}
+
+    addActivity('Approved application from ' + apps[idx].orgName, 'green');
+    showToast('✅ ' + apps[idx].orgName + ' approved!', 'green');
+    renderStats(); renderApps(); updateTabCounts();
+    // Confetti
+    var card = document.getElementById('card-' + id);
+    if (card && window.mdFireConfetti) {
+      var r = card.getBoundingClientRect();
+      window.mdFireConfetti(r.left + r.width/2, r.top + r.height/2);
+    }
+    // Re-animate stats
+    setTimeout(animateStats, 100);
+  }
+  window.approveApp = approveApp;
+
+  /* ── REJECT ── */
+  function openReject(id) {
+    rejectTargetId = id;
+    document.querySelectorAll('.reject-reasons input').forEach(function(r){ r.checked = false; });
+    document.getElementById('reject-custom').value = '';
+    openModal('reject-modal');
+  }
+  window.openReject = openReject;
+
+  function confirmReject() {
+    var checked = document.querySelector('.reject-reasons input:checked');
+    var custom  = document.getElementById('reject-custom').value.trim();
+    var reason  = '';
+    if (checked && checked.value !== 'custom') {
+      reason = checked.value;
+      if (custom) reason += ' Note: ' + custom;
+    } else {
+      reason = custom || 'Application rejected by admin.';
+    }
+    if (!reason) { showToast('Please select or enter a rejection reason', 'gold'); return; }
+
+    var apps = getApps();
+    var idx  = apps.findIndex(function(a){ return a.id === rejectTargetId; });
+    if (idx === -1) return;
+    apps[idx].status      = 'rejected';
+    apps[idx].rejectReason = reason;
+    apps[idx].reviewedAt  = new Date().toISOString();
+    saveApps(apps);
+
+    addActivity('Rejected application from ' + apps[idx].orgName + ' — ' + reason.slice(0,50), 'red');
+    closeModal('reject-modal');
+    showToast('❌ ' + apps[idx].orgName + ' rejected.', 'red');
+    renderStats(); renderApps(); updateTabCounts();
+    setTimeout(animateStats, 100);
+    rejectTargetId = null;
+  }
+  window.confirmReject = confirmReject;
+
+  /* ── DETAILS MODAL ── */
+  function openDetails(id) {
+    var apps = getApps();
+    var a    = apps.find(function(x){ return x.id === id; });
+    if (!a) return;
+    document.getElementById('dm-title').textContent = a.orgName + ' — Full Details';
+    document.getElementById('dm-body').innerHTML =
+      '<div class="modal-section">' +
+        '<div class="modal-section-title">Organisation Info</div>' +
+        '<div class="detail-grid">' +
+          detailItem('Organisation Name', a.orgName) +
+          detailItem('Category', (a.category||'').charAt(0).toUpperCase() + (a.category||'').slice(1)) +
+          detailItem('Reg / License No.', a.regNumber, true) +
+          detailItem('Status', a.status.charAt(0).toUpperCase() + a.status.slice(1)) +
+        '</div>' +
+      '</div>' +
+      '<div class="modal-section">' +
+        '<div class="modal-section-title">Address</div>' +
+        '<div class="detail-grid">' +
+          detailItem('Address', a.address) +
+          detailItem('City', a.city) +
+          detailItem('State', a.state) +
+          detailItem('PIN Code', a.pin) +
+        '</div>' +
+      '</div>' +
+      '<div class="modal-section">' +
+        '<div class="modal-section-title">Contact Person</div>' +
+        '<div class="detail-grid">' +
+          detailItem('Name', a.contactName) +
+          detailItem('Phone', a.contactPhone) +
+          detailItem('Email', a.email) +
+          detailItem('OTP Verified', a.otpVerified ? 'Yes ✅' : 'No ❌') +
+        '</div>' +
+      '</div>' +
+      '<div class="modal-section">' +
+        '<div class="modal-section-title">Submitted Documents</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+          '<div class="doc-thumb">' +
+            '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+            '<span>Premises Photo</span>' +
+            '<small>Uploaded during signup</small>' +
+          '</div>' +
+          '<div class="doc-thumb">' +
+            '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' +
+            '<span>License Document</span>' +
+            '<small>Uploaded during signup</small>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      (a.rejectReason
+        ? '<div class="card-reject-reason" style="margin-top:4px">❗ <span><strong>Rejection reason:</strong> ' + escHtml(a.rejectReason) + '</span></div>'
+        : '') +
+      '<div class="modal-section">' +
+        '<div class="modal-section-title">Timeline</div>' +
+        '<div class="activity-list">' +
+          timelineItem('gold',  'Application submitted', fmtDate(a.submittedAt)) +
+          (a.reviewedAt && a.status === 'approved' ? timelineItem('green', 'Application approved by admin', fmtDate(a.reviewedAt)) : '') +
+          (a.reviewedAt && a.status === 'rejected' ? timelineItem('red',   'Application rejected by admin', fmtDate(a.reviewedAt)) : '') +
+        '</div>' +
+      '</div>';
+
+    document.getElementById('dm-footer').innerHTML = a.status === 'pending'
+      ? '<button class="btn btn-secondary" onclick="closeModal(\'details-modal\')">Close</button>' +
+        '<button class="btn btn-danger"    onclick="closeModal(\'details-modal\');openReject(\'' + a.id + '\')">✗ Reject</button>' +
+        '<button class="btn btn-primary"   onclick="closeModal(\'details-modal\');approveApp(\'' + a.id + '\')">✓ Approve</button>'
+      : '<button class="btn btn-secondary" onclick="closeModal(\'details-modal\')">Close</button>';
+
+    openModal('details-modal');
+  }
+  window.openDetails = openDetails;
+
+  function detailItem(label, val, mono) {
+    return '<div class="detail-item">' +
+      '<div class="detail-label">' + label + '</div>' +
+      '<div class="detail-value' + (mono ? ' mono' : '') + '">' + escHtml(val || '—') + '</div>' +
+    '</div>';
+  }
+
+  function timelineItem(color, text, date) {
+    return '<div class="activity-item">' +
+      '<div class="activity-dot ' + color + '"></div>' +
+      '<div class="activity-content">' +
+        '<div class="activity-title">' + text + '</div>' +
+        '<div class="activity-time">' + date + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  /* ── DONORS TAB ── */
+  function renderDonors() {
+    var donors = getDonors();
+    var grid   = document.getElementById('donors-grid');
+    if (!donors.length) {
+      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">👤</div><h3>No donors yet</h3><p>Donors will appear here after they sign up.</p></div>';
+      return;
+    }
+    grid.innerHTML = donors.map(function(d){
+      var init = d.name.split(' ').map(function(w){ return w[0]; }).join('').toUpperCase().slice(0,2);
+      var badgeCls = d.active ? 'badge-active' : 'badge-inactive';
+      var badgeLbl = d.active ? 'Active' : 'Inactive';
+      return '<div class="donor-card">' +
+        '<div class="donor-avatar">' + init + '</div>' +
+        '<div class="donor-info">' +
+          '<div class="donor-name">' + escHtml(d.name) + '</div>' +
+          '<div class="donor-sub">📍 ' + escHtml(d.city) + ' · 💊 ' + d.donations + ' donation' + (d.donations !== 1 ? 's' : '') + '</div>' +
+          '<div class="donor-sub" style="margin-top:2px">Joined ' + d.joined + '</div>' +
+        '</div>' +
+        '<span class="badge ' + badgeCls + '">' + badgeLbl + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  /* ── ACTIVITY LOG ── */
+  var activityLog = [];
+
+  function addActivity(text, color) {
+    activityLog.unshift({ text: text, color: color, time: new Date().toISOString() });
+    if (activityLog.length > 50) activityLog.pop();
+    renderActivity();
+  }
+
+  function renderActivity() {
+    var defaultLog = [
+      { color: 'green', text: 'Admin portal accessed', time: new Date().toISOString() },
+      { color: 'gold',  text: 'System: 4 pending applications awaiting review', time: new Date(Date.now()-600000).toISOString() },
+      { color: 'blue',  text: 'RuralAid Medical Society was approved', time: new Date(Date.now()-4*24*60*60*1000).toISOString() },
+      { color: 'red',   text: 'MedRelief Trust was rejected — incomplete documents', time: new Date(Date.now()-6*24*60*60*1000).toISOString() }
+    ];
+    var log = activityLog.length ? activityLog : defaultLog;
+    var list = document.getElementById('activity-list');
+    list.innerHTML = log.map(function(item){
+      return '<div class="activity-item">' +
+        '<div class="activity-dot ' + item.color + '"></div>' +
+        '<div class="activity-content">' +
+          '<div class="activity-title">' + escHtml(item.text) + '</div>' +
+          '<div class="activity-time">' + timeAgo(item.time) + ' · ' + fmtDate(item.time) + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  /* ── MODALS ── */
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  window.openModal  = openModal;
+  window.closeModal = closeModal;
+
+  document.querySelectorAll('.modal-overlay').forEach(function(el){
+    el.addEventListener('click', function(e){
+      if (e.target === el) closeModal(el.id);
+    });
+  });
+
+  /* ── TOAST ── */
+  var toastTimer;
+  function showToast(msg, type) {
+    var t = document.getElementById('admin-toast');
+    t.textContent = msg;
+    t.className = 'show ' + (type === 'green' ? 'green-toast' : type === 'red' ? 'red-toast' : 'gold-toast');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.className = ''; }, 3200);
+  }
+  window.showToast = showToast;
+
+  /* ── UTILS ── */
+  function escHtml(str) {
+    return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function svgIcon(name) {
+    var icons = {
+      'map-pin': '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+      'user':    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+      'mail':    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+      'clock':   '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
+    };
+    return icons[name] || '';
+  }
+
+})();
+</script>
+
+<script src="animations.js" defer></script>
+</body>
+</html>
