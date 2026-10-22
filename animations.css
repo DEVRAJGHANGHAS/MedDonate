@@ -160,10 +160,10 @@
 
 .md-reveal {
   opacity: 0;
-  transform: translateY(26px);
+  transform: translateY(20px);
   transition:
-    opacity  0.52s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.52s cubic-bezier(0.22, 1, 0.36, 1);
+    opacity   0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: opacity, transform;
 }
 
@@ -206,20 +206,21 @@
 .card,
 .review-meta-box {
   transition:
-    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.2s ease,
-    border-color 0.18s ease !important;
+    opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.2s ease !important;
 }
 
 .donation-card:hover,
 .listing-card:hover {
   transform: translateY(-4px) !important;
-  box-shadow: 0 10px 32px rgba(31, 92, 78, 0.11) !important;
+  box-shadow: 0 12px 32px rgba(31, 92, 78, 0.12) !important;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px) scale(1.025) !important;
-  box-shadow: 0 6px 22px rgba(31, 92, 78, 0.1) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 24px rgba(31, 92, 78, 0.1) !important;
 }
 
 /* Shine sweep overlay on card hover */

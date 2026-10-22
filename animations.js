@@ -85,14 +85,19 @@
             if (node.querySelectorAll) {
               node.querySelectorAll(sel).forEach(function (el) { matches.push(el); });
             }
-            matches.forEach(function (el) {
+            matches.forEach(function (el, i) {
               if (!el.classList.contains('md-reveal')) {
                 el.classList.add('md-reveal');
+                el.classList.add(staggerClasses[Math.min(i, 5)]);
               }
-              // immediately visible if already in viewport
+              // smoothly reveal with stagger in next animation frame
               var rect = el.getBoundingClientRect();
               if (rect.top < window.innerHeight) {
-                el.classList.add('md-visible');
+                requestAnimationFrame(function () {
+                  requestAnimationFrame(function () {
+                    el.classList.add('md-visible');
+                  });
+                });
               } else {
                 observer.observe(el);
               }
@@ -132,12 +137,12 @@
 
     cards.forEach(function (card, i) {
       card.style.opacity   = '0';
-      card.style.transform = 'translateY(20px)';
+      card.style.transform = 'translateY(18px)';
       setTimeout(function () {
-        card.style.transition = 'opacity 0.42s ease, transform 0.42s cubic-bezier(0.22,1,0.36,1)';
+        card.style.transition = 'opacity 0.48s cubic-bezier(0.16,1,0.3,1), transform 0.48s cubic-bezier(0.16,1,0.3,1)';
         card.style.opacity    = '1';
         card.style.transform  = 'translateY(0)';
-      }, 440 + i * 90);
+      }, 160 + i * 75);
     });
   }
 

@@ -850,3 +850,512 @@ body.dark-mode .badge-completed { background: rgba(26, 115, 232, 0.3); color: #8
   border-color: var(--green-600);
   box-shadow: 0 0 0 3px rgba(31, 92, 78, 0.1);
 }
+
+/* ========================== TOAST (TYPED, BOTTOM-RIGHT) ========================== */
+/* Feature 4 — replaces the old centred single toast */
+#toastContainer {
+  position: fixed;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  right: 24px;
+  z-index: 300;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast-item {
+  padding: 12px 20px;
+  border-radius: var(--radius-pill);
+  font-size: 0.86rem;
+  font-weight: 500;
+  max-width: min(340px, calc(100vw - 48px));
+  box-shadow: 0 8px 24px rgba(0,0,0,.22);
+  opacity: 0;
+  transform: translateX(30px);
+  transition: opacity .3s ease, transform .3s ease;
+}
+.toast-item.toast-show {
+  opacity: 1;
+  transform: translateX(0);
+}
+.toast-success {
+  background: var(--green-900);
+  color: #fff;
+}
+.toast-error {
+  background: var(--red-600);
+  color: #fff;
+}
+
+/* Dark mode */
+body.dark-mode .toast-success { background: #1e3d31; color: #e2faf0; }
+body.dark-mode .toast-error   { background: #5a1a0f; color: #fcd9d0; }
+
+/* ========================== STOCK & EXPIRY BADGES ========================== */
+/* Feature 2 */
+.stock-badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+/* Red expiry-warn label (not a badge, more subtle) */
+.expiry-badge-warn {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--red-600);
+  background: var(--red-100);
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+/* Expired cards — grey out like .rejected but without the border stripe */
+.listing-card.card-expired {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+.listing-card.card-expired .med-name { color: var(--ink-soft); }
+
+/* ========================== REQUEST MEDICINE MODAL ========================== */
+/* Feature 3 — reuses .modal-overlay, .modal-content, .modal-head, .modal-body, .modal-foot, .form-group */
+/* No extra CSS needed beyond the hint paragraph already in shared styles */
+
+/* ========================== MY REQUESTS TABLE ========================== */
+/* Feature 3 */
+.my-requests-section { margin-top: 8px; }
+
+.my-requests-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+}
+
+.my-requests-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  font-size: 0.85rem;
+}
+
+.my-requests-table th,
+.my-requests-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.my-requests-table th {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--green-700);
+  background: var(--surface-2);
+}
+
+.my-requests-table tr:last-child td { border-bottom: none; }
+.my-requests-table tbody tr:hover { background: var(--surface-2); }
+
+/* Dark mode overrides */
+body.dark-mode .my-requests-table { background: var(--surface); }
+body.dark-mode .my-requests-table th { background: var(--surface-2); }
+
+@media (max-width: 375px) {
+  #toastContainer { right: 12px; left: 12px; }
+  .toast-item { max-width: 100%; }
+  .my-requests-table th,
+  .my-requests-table td { padding: 8px 10px; font-size: 0.78rem; }
+}
+
+/* ========================== OUR JOURNEY (MILESTONE TIMELINE) ========================== */
+.timeline-section {
+  margin: 36px 0 32px;
+}
+
+.timeline {
+  position: relative;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px 0;
+}
+
+/* Center vertical line on desktop */
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 50%;
+  width: 2px;
+  background: var(--line);
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+/* Timeline Item */
+.timeline-item {
+  position: relative;
+  width: 50%;
+  padding-bottom: 36px;
+  box-sizing: border-box;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 8px;
+}
+
+/* Desktop alternating left / right */
+.timeline-item.timeline-left {
+  left: 0;
+  padding-right: 44px;
+}
+
+.timeline-item.timeline-right {
+  left: 50%;
+  padding-left: 44px;
+}
+
+/* Milestone marker */
+.timeline-marker {
+  position: absolute;
+  top: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--green-700);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  z-index: 2;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.timeline-item.timeline-left .timeline-marker {
+  right: -22px;
+}
+
+.timeline-item.timeline-right .timeline-marker {
+  left: -22px;
+}
+
+.timeline-item:hover .timeline-marker {
+  transform: scale(1.12);
+  border-color: var(--green-600);
+  box-shadow: 0 4px 14px rgba(31, 92, 78, 0.25);
+}
+
+/* Milestone card */
+.timeline-card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 20px 22px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease;
+  cursor: default;
+}
+
+/* Hover effect: slight lift and stronger shadow */
+.timeline-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.09);
+  border-color: var(--green-600);
+}
+
+/* Pointer arrow from card to marker on desktop */
+.timeline-item.timeline-left .timeline-card::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  right: -7px;
+  width: 12px;
+  height: 12px;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  transform: rotate(45deg);
+  transition: border-color 0.2s ease;
+}
+
+.timeline-item.timeline-left .timeline-card:hover::after {
+  border-color: var(--green-600);
+}
+
+.timeline-item.timeline-right .timeline-card::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: -7px;
+  width: 12px;
+  height: 12px;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  transform: rotate(45deg);
+  transition: border-color 0.2s ease;
+}
+
+.timeline-item.timeline-right .timeline-card:hover::after {
+  border-color: var(--green-600);
+}
+
+/* Card content */
+.timeline-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.timeline-year {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--green-700);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.timeline-title {
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 8px;
+  line-height: 1.35;
+}
+
+.timeline-desc {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* Latest badge styling */
+.badge-latest {
+  background: var(--green-100);
+  color: var(--green-700);
+  border: 1px solid rgba(31, 92, 78, 0.2);
+}
+
+/* Scroll animation: cards fade and slide in from their side */
+.timeline-item.timeline-left .timeline-card {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s ease,
+              border-color 0.2s ease;
+}
+
+.timeline-item.timeline-right .timeline-card {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s ease,
+              border-color 0.2s ease;
+}
+
+.timeline-item .timeline-marker {
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.5s ease,
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease,
+              box-shadow 0.25s ease;
+}
+
+.timeline-item.is-visible .timeline-card {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.timeline-item.is-visible .timeline-marker {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.timeline-item.is-visible:hover .timeline-marker {
+  transform: scale(1.12);
+}
+
+.timeline-item.is-visible .timeline-card:hover {
+  transform: translateY(-4px);
+}
+
+/* ========================== TIMELINE DARK MODE ========================== */
+body.dark-mode .timeline::before {
+  background: var(--line);
+}
+
+body.dark-mode .timeline-card {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .timeline-card:hover {
+  border-color: var(--green-600);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .timeline-marker {
+  background: var(--surface-2);
+  border-color: var(--green-600);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .timeline-item:hover .timeline-marker {
+  border-color: #81c995;
+  box-shadow: 0 4px 14px rgba(78, 154, 130, 0.35);
+}
+
+body.dark-mode .timeline-item.timeline-left .timeline-card::after,
+body.dark-mode .timeline-item.timeline-right .timeline-card::after {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+body.dark-mode .timeline-item.timeline-left .timeline-card:hover::after,
+body.dark-mode .timeline-item.timeline-right .timeline-card:hover::after {
+  border-color: var(--green-600);
+}
+
+body.dark-mode .timeline-year {
+  color: #81c995;
+}
+
+body.dark-mode .badge-latest {
+  background: rgba(31, 92, 78, 0.4);
+  color: #81c995;
+  border-color: rgba(129, 201, 149, 0.35);
+}
+
+/* ========================== TIMELINE RESPONSIVE (<768px) ========================== */
+@media (max-width: 767px) {
+  .timeline::before {
+    left: 20px;
+    transform: none;
+  }
+
+  .timeline-item {
+    width: 100%;
+    left: 0 !important;
+    padding-left: 54px;
+    padding-right: 0 !important;
+    padding-bottom: 28px;
+  }
+
+  .timeline-marker {
+    left: 0 !important;
+    right: auto !important;
+    top: 12px;
+    width: 40px;
+    height: 40px;
+    font-size: 1.15rem;
+  }
+
+  /* Single-column: all cards slide in from right */
+  .timeline-item.timeline-left .timeline-card,
+  .timeline-item.timeline-right .timeline-card {
+    transform: translateX(30px);
+  }
+
+  .timeline-item.is-visible .timeline-card {
+    transform: translateX(0);
+  }
+
+  .timeline-item.is-visible .timeline-card:hover {
+    transform: translateY(-3px);
+  }
+
+  /* Arrows on mobile point left towards the marker */
+  .timeline-item.timeline-left .timeline-card::after,
+  .timeline-item.timeline-right .timeline-card::after {
+    top: 22px;
+    left: -7px;
+    right: auto;
+    border-right: none;
+    border-top: none;
+    border-left: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 480px) {
+  .timeline::before {
+    left: 17px;
+  }
+
+  .timeline-item {
+    padding-left: 48px;
+    padding-bottom: 22px;
+  }
+
+  .timeline-marker {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+    top: 10px;
+  }
+
+  .timeline-card {
+    padding: 14px 16px;
+  }
+
+  .timeline-title {
+    font-size: 1.02rem;
+  }
+}
+
+/* ========================== PREFERS REDUCED MOTION ========================== */
+@media (prefers-reduced-motion: reduce) {
+  .timeline-item .timeline-card,
+  .timeline-item .timeline-marker,
+  .timeline-item {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .timeline-card:hover {
+    transform: none !important;
+  }
+
+  .timeline-item:hover .timeline-marker {
+    transform: none !important;
+  }
+}
+
+/* ========================== FOOTER ========================== */
+.dash-footer {
+  text-align: center;
+  padding: 32px 16px 12px;
+  margin-top: 40px;
+  border-top: 1px solid var(--line);
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.dash-footer p {
+  margin: 0;
+  color: inherit;
+}
+

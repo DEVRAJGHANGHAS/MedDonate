@@ -69,22 +69,22 @@
   <section class="overview-stats">
     <div class="o-stat-card">
       <div class="icon">📦</div>
-      <div class="o-val">1,245</div>
+      <div class="o-val" id="oStat0" data-target="1245" data-suffix="">0</div>
       <div class="o-lbl">Total Donations</div>
     </div>
     <div class="o-stat-card">
       <div class="icon">🧑‍🤝‍🧑</div>
-      <div class="o-val">84</div>
+      <div class="o-val" id="oStat1" data-target="84" data-suffix="">0</div>
       <div class="o-lbl">Volunteers</div>
     </div>
     <div class="o-stat-card">
       <div class="icon">💖</div>
-      <div class="o-val">4,500+</div>
+      <div class="o-val" id="oStat2" data-target="4500" data-suffix="+">0</div>
       <div class="o-lbl">Beneficiaries Helped</div>
     </div>
     <div class="o-stat-card">
       <div class="icon">🚀</div>
-      <div class="o-val">12</div>
+      <div class="o-val" id="oStat3" data-target="12" data-suffix="">0</div>
       <div class="o-lbl">Active Projects</div>
     </div>
   </section>
@@ -118,6 +118,16 @@
       </div>
     </section>
   </div>
+
+  <!-- ===== OUR JOURNEY (MILESTONE TIMELINE) ===== -->
+  <section class="timeline-section" id="journeySection">
+    <div class="section-header" style="margin: 32px 0 20px;">
+      <h2 style="font-size:1.1rem;">Our Journey</h2>
+    </div>
+    <div class="timeline" id="timelineContainer">
+      <!-- Milestones rendered dynamically via JavaScript -->
+    </div>
+  </section>
 
   <!-- ===== SERVICE RANGE BAR ===== -->
   <div class="range-bar">
@@ -185,6 +195,34 @@
   <div class="listings-grid" id="listingsContainer">
     <!-- Rendered dynamically -->
   </div>
+
+  <!-- ===== MY REQUESTS ===== -->
+  <section class="my-requests-section" id="myRequestsSection" style="display:none;">
+    <div class="section-header" style="margin-top:32px;">
+      <h2>My Medicine Requests</h2>
+    </div>
+    <div class="my-requests-wrap">
+      <table class="my-requests-table" id="myRequestsTable">
+        <thead>
+          <tr>
+            <th>Medicine</th>
+            <th>Qty</th>
+            <th>Date</th>
+            <th>Requester</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="myRequestsBody">
+          <!-- Rendered by JS -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="dash-footer">
+    <p>&copy; 2026 MedDonate &middot; Connecting Generosity with Healthcare</p>
+  </footer>
 
 </div><!-- /shell -->
 
@@ -284,8 +322,41 @@
   </div>
 </div>
 
+<!-- ===== REQUEST MEDICINE MODAL ===== -->
+<div class="modal-overlay" id="requestModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div>
+        <h3>Request Medicine</h3>
+        <p style="font-size:0.8rem; color:var(--ink-soft); margin:3px 0 0;" id="requestModalSubtitle">Fill in your details to request this medicine.</p>
+      </div>
+      <button class="close-btn" id="closeRequestModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="reqName">Requester Name *</label>
+        <input type="text" id="reqName" placeholder="e.g. Dr. Sunita Sharma" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label for="reqPhone">Phone Number * <span style="font-weight:400;">(10 digits)</span></label>
+        <input type="tel" id="reqPhone" placeholder="e.g. 9811234567" maxlength="10" autocomplete="tel">
+      </div>
+      <div class="form-group">
+        <label for="reqQty">Quantity Requested *</label>
+        <input type="number" id="reqQty" placeholder="e.g. 5" min="1">
+        <p class="hint" id="reqQtyHint"></p>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="cancelRequestBtn">Cancel</button>
+      <button class="btn btn-primary" id="confirmRequestBtn">Submit Request</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== TOAST ===== -->
-<div id="toast"></div>
+<!-- Supports types: success (green) and error (red). Slides in from bottom-right. -->
+<div id="toastContainer" aria-live="polite"></div>
 
 
 <script>
@@ -303,6 +374,43 @@
   var rejectTargetId = null;
   var selectedRejectReason = '';
   var callTimer = null;
+
+  /* Medicine inventory: keyed by listing id. Stock + expiry used for badges/requests. */
+  var MEDICINE_STOCK = {
+    d1:    { qty: 14,  expiry: futureDateStr(4)  },
+    d2:    { qty: 30,  expiry: futureDateStr(10) },
+    d3:    { qty: 20,  expiry: futureDateStr(8)  },
+    d4:    { qty: 5,   expiry: futureDateStr(1.5)},
+    d5:    { qty: 0,   expiry: futureDateStr(14) },
+    d6:    { qty: 28,  expiry: futureDateStr(22) },
+    live1: { qty: 6,   expiry: futureDateStr(6)  },
+    live2: { qty: 10,  expiry: futureDateStr(18) },
+    live3: { qty: 4,   expiry: futureDateStr(20) }
+  };
+
+  /* Request modal state */
+  var requestTargetId = null;
+
+  /* Persisted medicine requests */
+  var medicineRequests = [];
+  try {
+    var rr = localStorage.getItem('meddonate_requests');
+    if (rr) medicineRequests = JSON.parse(rr);
+  } catch(e) {}
+
+  /* Persist stock overrides (so stock reductions survive refresh) */
+  try {
+    var sr = localStorage.getItem('meddonate_stock');
+    if (sr) Object.assign(MEDICINE_STOCK, JSON.parse(sr));
+  } catch(e) {}
+
+  function saveRequests() {
+    try { localStorage.setItem('meddonate_requests', JSON.stringify(medicineRequests)); } catch(e) {}
+  }
+  function saveStock() {
+    try { localStorage.setItem('meddonate_stock', JSON.stringify(MEDICINE_STOCK)); } catch(e) {}
+  }
+
   var liveInterval = null;
   var lastLiveCheck = Date.now();
 
@@ -408,13 +516,21 @@
   /* ============================================================
      UTILITY
      ============================================================ */
-  function toast(msg) {
-    var t = document.getElementById('toast');
-    if (!t) return;
+
+  /* Toast — bottom-right, supports type: 'success' | 'error' (default 'success') */
+  function toast(msg, type) {
+    var container = document.getElementById('toastContainer');
+    if (!container) return;
+    var t = document.createElement('div');
+    t.className = 'toast-item toast-' + (type === 'error' ? 'error' : 'success');
     t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(t._h);
-    t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+    container.appendChild(t);
+    // Trigger slide-in after paint
+    requestAnimationFrame(function(){ t.classList.add('toast-show'); });
+    setTimeout(function(){
+      t.classList.remove('toast-show');
+      setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 350);
+    }, 3000);
   }
 
   function esc(s) {
@@ -436,6 +552,44 @@
     var d = new Date(dateStr);
     return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   }
+
+  /* Format number in Indian style: 1245 → "1,245", 125000 → "1,25,000" */
+  function formatIndian(n) {
+    var s = String(Math.round(n));
+    if (s.length <= 3) return s;
+    var last3 = s.slice(-3);
+    var rest = s.slice(0, -3);
+    // Group remaining digits in pairs from right
+    rest = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+    return rest + ',' + last3;
+  }
+
+  /* Get current stock entry for a listing id (falls back to a safe default) */
+  function getStock(id) {
+    return MEDICINE_STOCK[id] || { qty: 0, expiry: '' };
+  }
+
+  /* Build stock badge HTML — reuses existing .badge classes */
+  function stockBadgeHTML(qty) {
+    if (qty === 0) return '<span class="badge badge-rejected">Out of Stock</span>';
+    if (qty < 20)  return '<span class="badge badge-pending">Low Stock (' + qty + ')</span>';
+    return '<span class="badge badge-accepted">In Stock (' + qty + ')</span>';
+  }
+
+  /* Build expiry badge HTML */
+  function expiryBadgeHTML(expiry) {
+    var days = expiryDaysLeft(expiry);
+    if (days < 0) return '<span class="badge badge-rejected">Expired</span>';
+    if (days < 30) return '<span class="expiry-badge-warn">Expires in ' + days + ' day' + (days !== 1 ? 's' : '') + '</span>';
+    return '';
+  }
+
+  /* Today's date string for request log */
+  function todayStr() {
+    return new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+
 
   /* ============================================================
      INITIALISE HEADER & META
@@ -614,7 +768,23 @@
         '</div>';
     }
 
-    return '<div class="listing-card ' + l.status + (l._justArrived ? ' new-incoming' : '') + '" id="card-' + l.id + '">' +
+    /* ── Feature 2: stock & expiry badges ── */
+    var stock = getStock(l.id);
+    var isExpired = expiryDaysLeft(stock.expiry) < 0;
+    var isOutOfStock = stock.qty === 0;
+    var requestDisabled = (isExpired || isOutOfStock) ? ' disabled' : '';
+    var stockBadge = stockBadgeHTML(stock.qty);
+    var expBadge   = expiryBadgeHTML(stock.expiry);
+    var expiredClass = isExpired ? ' card-expired' : '';
+
+    /* ── Feature 3: Request button (shown on every card) ── */
+    var requestBtn = '<button class="btn btn-gold btn-sm"' + requestDisabled +
+      ' data-action="open-request" data-id="' + l.id + '"' +
+      ' title="' + (isExpired ? 'Medicine expired' : isOutOfStock ? 'Out of stock' : 'Request this medicine') + '">' +
+      '📋 Request' +
+      '</button>';
+
+    return '<div class="listing-card ' + l.status + expiredClass + (l._justArrived ? ' new-incoming' : '') + '" id="card-' + l.id + '">' +
       imagePart +
       '<div class="card-body">' +
         '<div class="card-top">' +
@@ -626,6 +796,8 @@
           '<span class="meta-pill">📦 ' + esc(l.qty) + '</span>' +
           '<span class="meta-pill ' + (isUrgent ? 'text-red' : '') + '">⏳ Exp: ' + formatDate(l.expiry) + '</span>' +
         '</div>' +
+        /* Stock & expiry badges row */
+        '<div class="stock-badges">' + stockBadge + expBadge + '</div>' +
         (l.notes ? '<p style="font-size:0.8rem; color:var(--ink-soft); margin:0;">' + esc(l.notes) + '</p>' : '') +
         urgencyWarning +
         rejectionBox +
@@ -639,9 +811,14 @@
           '<span class="distance-badge">📍 ' + l.distance + ' km</span>' +
         '</div>' +
       '</div>' +
-      cardActions +
+      /* Card actions row — append Request button */
+      (cardActions
+        ? cardActions.replace('</div>', requestBtn + '</div>')
+        : '<div class="card-actions">' + requestBtn + '</div>') +
     '</div>';
   }
+
+
 
   /* ============================================================
      DEMO SIMULATION
@@ -1030,6 +1207,7 @@
     if (action === 'reject') { openRejectModal(id); return; }
     if (action === 'open-chat') { openChat(id); return; }
     if (action === 'call-donor') { startCall(id); return; }
+    if (action === 'open-request') { openRequestModal(id); return; }  // Feature 3
     if (action === 'mark-pickedup') {
       if (confirm('Mark this medicine as picked up? This completes the donation.')) {
         markPickedUp(id);
@@ -1110,11 +1288,117 @@
   });
 
   /* ============================================================
+     REQUEST MEDICINE MODAL (Feature 3)
+     ============================================================ */
+  function openRequestModal(id) {
+    var l = listings.find(function(x){ return x.id === id; });
+    var stock = getStock(id);
+    if (!l) return;
+
+    requestTargetId = id;
+    // Update subtitle with medicine name and available qty
+    document.getElementById('requestModalSubtitle').textContent =
+      l.name + ' — ' + stock.qty + ' unit(s) available';
+    // Hint label for quantity field
+    document.getElementById('reqQtyHint').textContent = 'Max available: ' + stock.qty;
+    document.getElementById('reqQty').max = stock.qty;
+    // Pre-fill name from NGO contact if blank
+    if (!document.getElementById('reqName').value) {
+      document.getElementById('reqName').value = ngoData.org.contactName || '';
+    }
+    if (!document.getElementById('reqPhone').value) {
+      document.getElementById('reqPhone').value = ngoData.org.contactPhone || ngoData.phone || '';
+    }
+    document.getElementById('requestModal').classList.add('open');
+  }
+
+  function closeRequestModal() {
+    document.getElementById('requestModal').classList.remove('open');
+    requestTargetId = null;
+  }
+
+  function submitRequest() {
+    var name  = document.getElementById('reqName').value.trim();
+    var phone = document.getElementById('reqPhone').value.trim();
+    var qty   = parseInt(document.getElementById('reqQty').value, 10);
+    var stock = getStock(requestTargetId);
+
+    // Validation
+    if (!name) { toast('Please enter a requester name.', 'error'); return; }
+    if (!/^\d{10}$/.test(phone)) { toast('Phone must be exactly 10 digits.', 'error'); return; }
+    if (!qty || qty < 1) { toast('Quantity must be at least 1.', 'error'); return; }
+    if (qty > stock.qty) { toast('Quantity exceeds available stock (' + stock.qty + ').', 'error'); return; }
+
+    var l = listings.find(function(x){ return x.id === requestTargetId; });
+    if (!l) return;
+
+    // Save request
+    medicineRequests.push({
+      id: Date.now(),
+      medId: requestTargetId,
+      medicine: l.name,
+      qty: qty,
+      date: todayStr(),
+      requester: name,
+      phone: phone,
+      status: 'Pending'
+    });
+    saveRequests();
+
+    // Reduce stock & persist — ensure entry exists for live listings
+    if (!MEDICINE_STOCK[requestTargetId]) {
+      MEDICINE_STOCK[requestTargetId] = { qty: 0, expiry: stock.expiry };
+    }
+    MEDICINE_STOCK[requestTargetId].qty = Math.max(0, stock.qty - qty);
+    saveStock();
+
+    closeRequestModal();
+    renderListings();
+    renderMyRequests();
+    toast('✓ Request submitted for ' + l.name + '!', 'success');
+  }
+
+  /* Request modal listeners */
+  document.getElementById('closeRequestModal').addEventListener('click', closeRequestModal);
+  document.getElementById('cancelRequestBtn').addEventListener('click', closeRequestModal);
+  document.getElementById('confirmRequestBtn').addEventListener('click', submitRequest);
+  document.getElementById('requestModal').addEventListener('click', function(e){
+    if (e.target === this) closeRequestModal();
+  });
+
+  /* ============================================================
+     MY REQUESTS TABLE (Feature 3)
+     ============================================================ */
+  function renderMyRequests() {
+    var section = document.getElementById('myRequestsSection');
+    var tbody   = document.getElementById('myRequestsBody');
+    if (!section || !tbody) return;
+
+    if (medicineRequests.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+    section.style.display = '';
+
+    tbody.innerHTML = medicineRequests.slice().reverse().map(function(r) {
+      return '<tr>' +
+        '<td>' + esc(r.medicine) + '</td>' +
+        '<td>' + r.qty + '</td>' +
+        '<td>' + esc(r.date) + '</td>' +
+        '<td>' + esc(r.requester) + '</td>' +
+        '<td><span class="badge badge-pending">Pending</span></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  /* ============================================================
      BOOT
      ============================================================ */
   initHeader();
   renderListings();
+  renderMyRequests();   // restore from localStorage on load
   startLiveSimulation();
+
 
   // Auto-load demo listings on first visit
   try {
@@ -1124,16 +1408,17 @@
   } catch(e) {}
 
   /* ============================================================
-     NEW FEATURES (Dark Mode, Chart, Search Filter)
+     NEW FEATURES (Dark Mode, Chart, Search Filter, Animated Counters)
      ============================================================ */
-  
-  // 1. Dark Mode Toggle
+
+  // 1. Dark Mode Toggle — fires a typed toast (Feature 4)
   var darkToggleBtn = document.getElementById('darkModeToggle');
   if (darkToggleBtn) {
     darkToggleBtn.addEventListener('click', function() {
       document.body.classList.toggle('dark-mode');
       var isDark = document.body.classList.contains('dark-mode');
       this.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+      toast(isDark ? '🌙 Dark mode enabled' : '☀️ Light mode enabled', 'success');
     });
   }
 
@@ -1172,6 +1457,166 @@
       }
     });
   }
+
+  // 4. Animated Overview Stat Counters (Feature 1)
+  // Reads data-target, data-prefix, data-suffix from each .o-val element.
+  function animateOverviewStats() {
+    var els = document.querySelectorAll('.o-val[data-target]');
+    els.forEach(function(el) {
+      var target   = parseInt(el.getAttribute('data-target'), 10);
+      var prefix   = el.getAttribute('data-prefix') || '';
+      var suffix   = el.getAttribute('data-suffix') || '';
+      var duration = 1500; // ms
+      var start    = null;
+
+      function easeOut(t) { return 1 - Math.pow(1 - t, 3); }  // cubic ease-out
+
+      function step(timestamp) {
+        if (!start) start = timestamp;
+        var elapsed  = timestamp - start;
+        var progress = Math.min(elapsed / duration, 1);
+        var value    = Math.round(easeOut(progress) * target);
+        el.textContent = prefix + formatIndian(value) + suffix;
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
+  }
+  animateOverviewStats();
+
+  /* ============================================================
+     5. MILESTONE TIMELINE ("OUR JOURNEY")
+     ============================================================ */
+  const milestones = [
+    {
+      year: "2021",
+      title: "NGO Founded",
+      description: "Aarogya Seva Medical Trust was established to bridge the critical gap between medicine surplus and underserved healthcare clinics.",
+      icon: "🌱"
+    },
+    {
+      year: "2022",
+      title: "First Medicine Drive",
+      description: "Conducted our inaugural doorstep collection campaign across Delhi NCR, securing vital antibiotics and pain relievers.",
+      icon: "📦"
+    },
+    {
+      year: "2023",
+      title: "500 People Helped",
+      description: "Crossed our first major milestone of safely redistributing verified medications to over 500 low-income patients in need.",
+      icon: "💖"
+    },
+    {
+      year: "2024",
+      title: "First Health Camp",
+      description: "Organized a multi-specialty health camp in Alwar, providing free medical checkups and prescribed treatments to 300+ families.",
+      icon: "🏥"
+    },
+    {
+      year: "2025",
+      title: "1,000 People Helped",
+      description: "Expanded partnerships with 15 community dispensaries, scaling our monthly distribution to reach more than 1,000 beneficiaries.",
+      icon: "🤝"
+    },
+    {
+      year: "2026",
+      title: "50 Volunteers Joined",
+      description: "Expanded our rapid-response volunteer courier network to 50 active members for doorstep pickup and verification.",
+      icon: "🚀"
+    }
+  ];
+
+  // Render milestone cards from array
+  function renderMilestones() {
+    var container = document.getElementById('timelineContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    milestones.forEach(function(m, idx) {
+      var isLatest = (idx === milestones.length - 1);
+      var sideClass = (idx % 2 === 0) ? 'timeline-left' : 'timeline-right';
+
+      var item = document.createElement('div');
+      item.className = 'timeline-item ' + sideClass + (isLatest ? ' is-latest' : '');
+      item.setAttribute('data-index', idx);
+
+      var marker = document.createElement('div');
+      marker.className = 'timeline-marker';
+      marker.setAttribute('aria-hidden', 'true');
+      marker.textContent = m.icon || '📍';
+
+      var card = document.createElement('div');
+      card.className = 'timeline-card';
+
+      var header = document.createElement('div');
+      header.className = 'timeline-card-header';
+
+      var year = document.createElement('span');
+      year.className = 'timeline-year';
+      year.textContent = m.year;
+      header.appendChild(year);
+
+      if (isLatest) {
+        var badge = document.createElement('span');
+        badge.className = 'status-badge badge-latest';
+        badge.textContent = 'Latest';
+        header.appendChild(badge);
+      }
+
+      var title = document.createElement('h3');
+      title.className = 'timeline-title';
+      title.textContent = m.title;
+
+      var desc = document.createElement('p');
+      desc.className = 'timeline-desc';
+      desc.textContent = m.description;
+
+      card.appendChild(header);
+      card.appendChild(title);
+      card.appendChild(desc);
+
+      item.appendChild(marker);
+      item.appendChild(card);
+      container.appendChild(item);
+    });
+
+    initTimelineObserver();
+  }
+
+  // IntersectionObserver for scroll-triggered entrance animations
+  function initTimelineObserver() {
+    var items = document.querySelectorAll('.timeline-item');
+    if (!items.length) return;
+
+    var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReduced || !('IntersectionObserver' in window)) {
+      items.forEach(function(el) {
+        el.classList.add('is-visible');
+      });
+      return;
+    }
+
+    var observer = new IntersectionObserver(function(entries, obs) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, {
+      root: null,
+      threshold: 0.15,
+      rootMargin: '0px 0px -40px 0px'
+    });
+
+    items.forEach(function(el) {
+      observer.observe(el);
+    });
+  }
+
+  renderMilestones();
 
 })();
 </script>
