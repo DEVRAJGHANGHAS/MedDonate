@@ -70,6 +70,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -192,12 +196,21 @@ header.top {
   font-weight: 600;
   font-size: 0.88rem;
   cursor: pointer;
-  transition: transform .12s ease, background .15s ease, border-color .15s ease;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.2s ease,
+              border-color 0.2s ease,
+              box-shadow 0.2s ease;
   white-space: nowrap;
 }
 
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
+
 .btn:active {
-  transform: scale(0.98);
+  transform: scale(0.97) translateY(0);
+  box-shadow: none;
 }
 
 .btn-primary {
@@ -319,6 +332,17 @@ header.top {
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
   padding: 16px 18px;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease,
+              opacity 0.35s ease;
+  will-change: transform, box-shadow;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--green-600);
+  box-shadow: 0 8px 22px rgba(31, 92, 78, 0.1);
 }
 
 .stat-card .val {
@@ -361,11 +385,21 @@ header.top {
   font-weight: 500;
   cursor: pointer;
   color: var(--ink-soft);
-  transition: all .15s ease;
+  transition: background 0.2s ease,
+              color 0.2s ease,
+              border-color 0.2s ease,
+              transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.18s ease;
 }
 
 .filter-btn:hover {
   border-color: var(--green-600);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.filter-btn:active {
+  transform: scale(0.96);
 }
 
 .filter-btn.active {
@@ -388,11 +422,17 @@ header.top {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  transition: border-color .15s ease, box-shadow .15s ease;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease,
+              opacity 0.35s ease;
+  will-change: transform, box-shadow;
 }
 
 .donation-card:hover {
+  transform: translateY(-4px);
   border-color: var(--green-600);
+  box-shadow: 0 12px 30px rgba(31, 92, 78, 0.12);
 }
 
 .card-top {
@@ -477,12 +517,17 @@ header.top {
   font-size: 0.65rem;
   font-weight: 700;
   color: var(--ink-soft);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.25s ease,
+              border-color 0.25s ease,
+              color 0.25s ease;
 }
 
 .step-node.active .step-circle {
   border-color: var(--green-600);
   background: var(--green-600);
   color: #fff;
+  transform: scale(1.15);
 }
 
 .step-node.done .step-circle {
@@ -559,7 +604,7 @@ header.top {
   z-index: 100;
   opacity: 0;
   pointer-events: none;
-  transition: opacity .2s ease;
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-overlay.open {
@@ -576,13 +621,15 @@ header.top {
   max-height: 90vh;
   overflow-y: auto;
   padding: 26px;
-  box-shadow: 0 16px 40px rgba(0,0,0,0.25);
-  transform: translateY(20px);
-  transition: transform .2s ease;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.22);
+  transform: translateY(24px) scale(0.97);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.28s ease;
+  will-change: transform, opacity;
 }
 
 .modal-overlay.open .modal-content {
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 .modal-head {
@@ -671,8 +718,10 @@ header.top {
   flex-direction: column;
   z-index: 90;
   overflow: hidden;
-  transform: translateY(120%);
-  transition: transform .25s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(115%);
+  transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s ease;
+  will-change: transform;
 }
 
 .chat-drawer.open {
@@ -755,6 +804,18 @@ header.top {
   font-size: 0.86rem;
   line-height: 1.4;
   word-wrap: break-word;
+  animation: md-msgSlideIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes md-msgSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .msg-ngo {
@@ -796,11 +857,19 @@ header.top {
   font-size: 0.72rem;
   cursor: pointer;
   color: var(--ink);
+  transition: background 0.18s ease,
+              border-color 0.18s ease,
+              transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .quick-pill:hover {
   background: var(--green-100);
   border-color: var(--green-600);
+  transform: translateY(-1px);
+}
+
+.quick-pill:active {
+  transform: scale(0.96);
 }
 
 .chat-input-area {
@@ -909,7 +978,10 @@ header.top {
   place-items: center;
   cursor: pointer;
   overflow: hidden;
-  transition: border-color .15s ease, background .15s ease;
+  transition: border-color 0.22s ease,
+              background 0.22s ease,
+              transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s ease;
   text-align: center;
   padding: 12px;
 }
@@ -917,6 +989,8 @@ header.top {
 .photo-dropzone:hover {
   border-color: var(--green-600);
   background: var(--surface);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 
 .photo-dropzone.has-photo {
@@ -1011,7 +1085,7 @@ header.top {
   position: fixed;
   left: 50%;
   bottom: 24px;
-  transform: translateX(-50%) translateY(20px);
+  transform: translateX(-50%) translateY(24px) scale(0.95);
   background: var(--green-900);
   color: #fff;
   padding: 12px 20px;
@@ -1020,11 +1094,13 @@ header.top {
   box-shadow: 0 8px 24px rgba(0,0,0,.25);
   opacity: 0;
   pointer-events: none;
-  transition: opacity .2s ease, transform .2s ease;
+  transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 200;
+  will-change: opacity, transform;
 }
 
 #toast.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(-50%) translateY(0) scale(1);
 }
