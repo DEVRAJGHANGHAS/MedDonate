@@ -119,6 +119,16 @@
     </section>
   </div>
 
+  <!-- ===== OUR JOURNEY (MILESTONE TIMELINE) ===== -->
+  <section class="timeline-section" id="journeySection">
+    <div class="section-header" style="margin: 32px 0 20px;">
+      <h2 style="font-size:1.1rem;">Our Journey</h2>
+    </div>
+    <div class="timeline" id="timelineContainer">
+      <!-- Milestones rendered dynamically via JavaScript -->
+    </div>
+  </section>
+
   <!-- ===== SERVICE RANGE BAR ===== -->
   <div class="range-bar">
     <div class="range-label">
@@ -208,6 +218,11 @@
       </table>
     </div>
   </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="dash-footer">
+    <p>&copy; 2026 MedDonate &middot; Connecting Generosity with Healthcare</p>
+  </footer>
 
 </div><!-- /shell -->
 
@@ -1469,7 +1484,139 @@
   }
   animateOverviewStats();
 
+  /* ============================================================
+     5. MILESTONE TIMELINE ("OUR JOURNEY")
+     ============================================================ */
+  const milestones = [
+    {
+      year: "2021",
+      title: "NGO Founded",
+      description: "Aarogya Seva Medical Trust was established to bridge the critical gap between medicine surplus and underserved healthcare clinics.",
+      icon: "🌱"
+    },
+    {
+      year: "2022",
+      title: "First Medicine Drive",
+      description: "Conducted our inaugural doorstep collection campaign across Delhi NCR, securing vital antibiotics and pain relievers.",
+      icon: "📦"
+    },
+    {
+      year: "2023",
+      title: "500 People Helped",
+      description: "Crossed our first major milestone of safely redistributing verified medications to over 500 low-income patients in need.",
+      icon: "💖"
+    },
+    {
+      year: "2024",
+      title: "First Health Camp",
+      description: "Organized a multi-specialty health camp in Alwar, providing free medical checkups and prescribed treatments to 300+ families.",
+      icon: "🏥"
+    },
+    {
+      year: "2025",
+      title: "1,000 People Helped",
+      description: "Expanded partnerships with 15 community dispensaries, scaling our monthly distribution to reach more than 1,000 beneficiaries.",
+      icon: "🤝"
+    },
+    {
+      year: "2026",
+      title: "50 Volunteers Joined",
+      description: "Expanded our rapid-response volunteer courier network to 50 active members for doorstep pickup and verification.",
+      icon: "🚀"
+    }
+  ];
 
+  // Render milestone cards from array
+  function renderMilestones() {
+    var container = document.getElementById('timelineContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    milestones.forEach(function(m, idx) {
+      var isLatest = (idx === milestones.length - 1);
+      var sideClass = (idx % 2 === 0) ? 'timeline-left' : 'timeline-right';
+
+      var item = document.createElement('div');
+      item.className = 'timeline-item ' + sideClass + (isLatest ? ' is-latest' : '');
+      item.setAttribute('data-index', idx);
+
+      var marker = document.createElement('div');
+      marker.className = 'timeline-marker';
+      marker.setAttribute('aria-hidden', 'true');
+      marker.textContent = m.icon || '📍';
+
+      var card = document.createElement('div');
+      card.className = 'timeline-card';
+
+      var header = document.createElement('div');
+      header.className = 'timeline-card-header';
+
+      var year = document.createElement('span');
+      year.className = 'timeline-year';
+      year.textContent = m.year;
+      header.appendChild(year);
+
+      if (isLatest) {
+        var badge = document.createElement('span');
+        badge.className = 'status-badge badge-latest';
+        badge.textContent = 'Latest';
+        header.appendChild(badge);
+      }
+
+      var title = document.createElement('h3');
+      title.className = 'timeline-title';
+      title.textContent = m.title;
+
+      var desc = document.createElement('p');
+      desc.className = 'timeline-desc';
+      desc.textContent = m.description;
+
+      card.appendChild(header);
+      card.appendChild(title);
+      card.appendChild(desc);
+
+      item.appendChild(marker);
+      item.appendChild(card);
+      container.appendChild(item);
+    });
+
+    initTimelineObserver();
+  }
+
+  // IntersectionObserver for scroll-triggered entrance animations
+  function initTimelineObserver() {
+    var items = document.querySelectorAll('.timeline-item');
+    if (!items.length) return;
+
+    var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReduced || !('IntersectionObserver' in window)) {
+      items.forEach(function(el) {
+        el.classList.add('is-visible');
+      });
+      return;
+    }
+
+    var observer = new IntersectionObserver(function(entries, obs) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, {
+      root: null,
+      threshold: 0.15,
+      rootMargin: '0px 0px -40px 0px'
+    });
+
+    items.forEach(function(el) {
+      observer.observe(el);
+    });
+  }
+
+  renderMilestones();
 
 })();
 </script>
